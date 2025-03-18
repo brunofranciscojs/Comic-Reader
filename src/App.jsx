@@ -192,7 +192,6 @@ export default function App() {
             })}
           </ul>
           )
-
         ) : (
           <p className="text-center">No file.</p>
         )}
