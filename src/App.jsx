@@ -174,7 +174,7 @@ export default function App() {
             {arquivosFiltrados.map((file) => {
               const info = extractInfoFromTitle(file.name);
               return (
-                <li key={file.id} data-year={info.ano} style={{"--bg":`url(./assets/${info.edicao < 100 ? parseInt(info.edicao, 10) : info.edicao}.jpg)`}} 
+                <li key={file.id} data-year={info.ano} style={{"--bg":`url(/../assets/${info.edicao < 100 ? parseInt(info.edicao, 10) : info.edicao}.jpg)`}} 
                     className="bg-gray-700 rounded-lg px-8 relative h-auto duration-200 cursor-pointer 
                     after:duration-200 after:content-[''] hover:after:opacity-100 after:opacity-0 after:!bg-center after:!bg-contain after:[background:--bg] after:h-0 after:absolute after:-top-20 after:w-56 hover:after:h-80 after:right-0 after:rounded-xl after:z-40">
   
