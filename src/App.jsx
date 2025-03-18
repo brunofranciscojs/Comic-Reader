@@ -5,9 +5,6 @@ import JSZip from "jszip";
 const apiKey = import.meta.env.VITE_API_KEY;
 const folderId = import.meta.env.VITE_FOLDER_ID;
 
-console.log("API Key:", apiKey);
-console.log("Folder ID:", folderId);
-
 export default function App() {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,7 +13,6 @@ export default function App() {
   const [overlay, setOverlay] = useState(false)
   const [list, setList] = useState(false)
   const [busca, setBusca] = useState("");
-  const [comic, setComic] = useState(false)
 
   const url = `https://www.googleapis.com/drive/v3/files?q='${folderId}'%20in%20parents&key=${apiKey}`;
   const listIcon = `<svg width="2rem" height="2rem" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 6h8m-8 6h10M9 18h8M5 3v18" color="currentColor"/></svg>`
@@ -123,7 +119,6 @@ export default function App() {
       edition.includes(busca)
     );
   });
-  const openDetails = () => setComic(true)
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -139,7 +134,9 @@ export default function App() {
       {!loading && !error && (
         <>
         {arquivosFiltrados.length > 0 ? (
-          <ul className="px-8 lg:px-0 flex flex-wrap gap-x-1 gap-y-7 items-center justify-around [&:has(li:not(:hover))_li:hover]:opacity-100 [&:has(li:hover)_li]:opacity-[.3]" style={{minHeight: busca.length > 1 ? '100dvh' : 'auto'}}>
+
+          !list ? (
+           <ul className="px-8 lg:px-0 flex flex-wrap gap-x-1 gap-y-7 items-center justify-around [&:has(li:not(:hover))_li:hover]:opacity-100 [&:has(li:hover)_li]:opacity-[.3]" style={{minHeight: busca.length > 1 ? '100dvh' : 'auto'}}>
             <li className="absolute pointer-events-none"></li>
             {arquivosFiltrados.map((file) => {
               const info = extractInfoFromTitle(file.name);
@@ -171,6 +168,31 @@ export default function App() {
               );
             })}
           </ul>
+          ) : (
+          <ul className="px-8 lg:px-4 flex flex-col gap-3 [&:has(li:not(:hover))_li:hover]:opacity-100 [&:has(li:hover)_li]:opacity-[.6] pb-24">
+            <li className="absolute pointer-events-none"></li>
+            {arquivosFiltrados.map((file) => {
+              const info = extractInfoFromTitle(file.name);
+              return (
+                <li key={file.id} data-year={info.ano} style={{"--bg":`url(./assets/${info.edicao < 100 ? parseInt(info.edicao, 10) : info.edicao}.jpg)`}} 
+                    className="bg-gray-700 rounded-lg px-8 relative h-auto duration-200 cursor-pointer 
+                    after:duration-200 after:content-[''] hover:after:opacity-100 after:opacity-0 after:!bg-center after:!bg-contain after:[background:--bg] after:h-0 after:absolute after:-top-20 after:w-56 hover:after:h-80 after:right-0 after:rounded-xl after:z-40">
+  
+                  <div className="relative p-4 flex flex-row z-20">
+                    <h3 className="text-base font-semibold">
+                      {file.name} 
+                    </h3>
+                    <button onClick={() => openComicFromDrive(file.id, file.name)}
+                      className="bg-[#f4ed24] hover:bg-[#00bcf0] text-[#303539] py-1 px-2 rounded transition z-20 ml-12">
+                      Read
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+          )
+
         ) : (
           <p className="text-center">No file.</p>
         )}

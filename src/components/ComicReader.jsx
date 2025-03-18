@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Splide, SplideSlide } from '@splidejs/react-splide';
 import '@splidejs/react-splide/css';
 
+
 export default function ComicReader({ file, setOverlay, overlay }) {
   const [slider, setSlider] = useState(false);
   const loading = `<svg viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <path d="M4.5 12.5C4.5 16.9183 8.08172 20.5 12.5 20.5C16.9183 20.5 20.5 16.9183 20.5 12.5C20.5 8.08172 16.9183 4.5 12.5 4.5" stroke="#121923" stroke-width="1.2"></path> </g></svg>`
@@ -32,14 +33,16 @@ export default function ComicReader({ file, setOverlay, overlay }) {
 
         <div className="flex justify-start absolute left-1/2 -translate-x-1/2 top-0 w-full px-12 py-5 backdrop-blur-md bg-black/40 z-[1] gap-5">
          <img src="/assets/logo.webp" width={120} />
-         <span className="text-[#f4ed24] text-3xl font-['impact']">{file.fileName.split('Invincible')[1].split('(')[0] || "Sem arquivo"}</span>
+         <span className="text-[#f4ed24] text-3xl font-['impact']">
+          #{file.fileName.split('Invincible')[1].split('(')[0] < 100 ? parseInt(file.fileName.split('Invincible')[1].split('(')[0], 10) : file.fileName.split('Invincible')[1].split('(')[0] }
+          </span>
         </div>
 
           {slider ? (<Splide options={{ perPage: 1, arrows: true, pagination:true }} className="[&>#splide01-track]:h-dvh flex h-dvh z-[1]">
             {file.images.map((image, index) => (
               <SplideSlide key={index}>
                 <img src={image.url} className="max-w-full object-contain w-full rounded shadow-lg h-full [scale:.9] translate-y-8"/>
-                <span className="text-gray-300 absolute top-[1.6rem] left-64 z-20">#{index + 1}</span>
+                <span className="text-gray-300 absolute top-[1.6rem] left-[18rem] z-20">p. {index + 1}</span>
               </SplideSlide>
             ))}
           </Splide>) : (
