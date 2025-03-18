@@ -31,14 +31,14 @@ export default function ComicReader({ file, setOverlay, overlay }) {
         <button className="bg-black text-white rounded-full w-5 h-5 absolute top-4 right-4 z-10" onClick={closeSlider}>X</button>
 
         <div className="flex justify-between absolute left-1/2 -translate-x-1/2 top-0 w-full px-12 py-5 backdrop-blur-md bg-black/40 z-[1]">
-          <h2 className="text-xl font-bold">{file.fileName.split('(')[0] || "Sem arquivo"}</h2>
+        <img src="/assets/logo.webp" width={120} />
         </div>
 
           {slider ? (<Splide options={{ perPage: 1, arrows: true, pagination:true }} className="[&>#splide01-track]:h-dvh flex h-dvh z-[1]">
             {file.images.map((image, index) => (
               <SplideSlide key={index}>
                 <img src={image.url} className="max-w-full object-contain w-full rounded shadow-lg h-full [scale:.9] translate-y-8"/>
-                <span className="text-gray-300 absolute top-[1.45rem] left-52 z-20">#{index + 1}</span>
+                <span className="text-gray-300 absolute top-[1.45rem] left-48 z-20">#{index + 1}</span>
               </SplideSlide>
             ))}
           </Splide>) : (
