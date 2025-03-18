@@ -20,7 +20,7 @@ It can be replicated to any other comic series (.cbz format)
 ## Setup Instructions
 1. Clone the repository:
    ```sh
-   git clone https://github.com/yourusername/invincible-reader.git
+   git clone https://github.com/yourusername/Comic-Reader.git
    cd invincible-reader
    ```
 2. Install dependencies:
