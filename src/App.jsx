@@ -169,7 +169,7 @@ export default function App() {
             })}
           </ul>
           ) : (
-          <ul className="px-8 lg:px-4 flex flex-col gap-3 [&:has(li:not(:hover))_li:hover]:opacity-100 [&:has(li:hover)_li]:opacity-[.6] pb-24">
+          <ul className="px-8 lg:px-4 flex flex-col gap-3 [&:has(li:not(:hover))_li:hover]:opacity-100 [&:has(li:hover)_li]:opacity-[.6] pb-44">
             <li className="absolute pointer-events-none"></li>
             {arquivosFiltrados.map((file) => {
               const info = extractInfoFromTitle(file.name);
