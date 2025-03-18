@@ -30,15 +30,16 @@ export default function ComicReader({ file, setOverlay, overlay }) {
       <div className="fixed backdrop-blur-md top-0 left-0 w-full h-dvh flex justify-center items-center z-50 [background:var(--bg)_#000d] bg-blend-multiply !bg-center !bg-[length:200px]" style={{"--bg":`url(/../assets/${bg}.jpg)`}}>
         <button className="bg-black text-white rounded-full w-5 h-5 absolute top-4 right-4 z-10" onClick={closeSlider}>X</button>
 
-        <div className="flex justify-between absolute left-1/2 -translate-x-1/2 top-0 w-full px-12 py-5 backdrop-blur-md bg-black/40 z-[1]">
-        <img src="/assets/logo.webp" width={120} />
+        <div className="flex justify-start absolute left-1/2 -translate-x-1/2 top-0 w-full px-12 py-5 backdrop-blur-md bg-black/40 z-[1] gap-5">
+         <img src="/assets/logo.webp" width={120} />
+         <span className="text-[#f4ed24] text-3xl font-['impact']">{file.fileName.split('Invincible')[1].split('(')[0] || "Sem arquivo"}</span>
         </div>
 
           {slider ? (<Splide options={{ perPage: 1, arrows: true, pagination:true }} className="[&>#splide01-track]:h-dvh flex h-dvh z-[1]">
             {file.images.map((image, index) => (
               <SplideSlide key={index}>
                 <img src={image.url} className="max-w-full object-contain w-full rounded shadow-lg h-full [scale:.9] translate-y-8"/>
-                <span className="text-gray-300 absolute top-[1.45rem] left-48 z-20">#{index + 1}</span>
+                <span className="text-gray-300 absolute top-[1.6rem] left-64 z-20">#{index + 1}</span>
               </SplideSlide>
             ))}
           </Splide>) : (
