@@ -22,7 +22,7 @@ export default function ComicReader({ file, setOverlay, overlay }) {
   }
 
   if (!file || !file.images) {
-    return <p>Nenhum arquivo selecionado.</p>;
+    return <p>no file.</p>;
   }
   
   return (
@@ -46,7 +46,7 @@ export default function ComicReader({ file, setOverlay, overlay }) {
             <div className="flex justify-center items-center gap-5 flex-col">
               <span className="animate-spin brightness-[20] w-12 h-12 block" 
                     dangerouslySetInnerHTML={{__html:loading}} ></span>
-              <span className="text-sm text-white block mx-auto">Descomprimindo arquivo .cbz, aguarde... </span>
+              <span className="text-sm text-white block mx-auto">Unpacking .cbz file, please wait... </span>
             </div>
           )}
       </div>

@@ -127,9 +127,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      <div className="flex justify-between items-center py-4 px-12 flex-wrap mb-12">
+      <div className="flex justify-between items-center py-4 px-12 flex-wrap mb-12 gap-5">
         <img src="/assets/logo.webp" width={120} />
-        <input type="text" placeholder="Buscar edição..." onInput={(e) => setBusca(e.target.value)} className="w-full lg:min-w-[unset] grow lg:order-[unset] order-3 lg:grow-0 px-5 p-2 text-gray-300 lg:w-1/2 bg-white/10 rounded-xl"/>
+        <input type="text" placeholder="Seek edition..." onInput={(e) => setBusca(e.target.value)} className="w-full lg:min-w-[unset] grow lg:order-[unset] order-3 lg:grow-0 px-5 p-2 text-gray-300 lg:w-1/2 bg-white/10 rounded-xl"/>
         <button dangerouslySetInnerHTML={{__html: list ? listIcon : columnIcon}} onClick={() =>setList(prvLst => !prvLst)}></button>
       </div>
 
@@ -172,7 +172,7 @@ export default function App() {
             })}
           </ul>
         ) : (
-          <p className="text-center">Nenhum arquivo encontrado.</p>
+          <p className="text-center">No file.</p>
         )}
       </>
       )}
