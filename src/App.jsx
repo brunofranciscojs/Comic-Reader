@@ -13,11 +13,14 @@ export default function App() {
   const [overlay, setOverlay] = useState(false)
   const [list, setList] = useState(false)
   const [busca, setBusca] = useState("");
+  const [saved, setSaved] = useState({})
+
 
   const url = `https://www.googleapis.com/drive/v3/files?q='${folderId}'%20in%20parents&key=${apiKey}`;
   const listIcon = `<svg width="2rem" height="2rem" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 6h8m-8 6h10M9 18h8M5 3v18" color="currentColor"/></svg>`
   const columnIcon = `<svg width="2rem" height="2rem" viewBox="0 0 24 24"><path fill="currentColor" d="M16 5v13h5V5M4 18h5V5H4m6 13h5V5h-5z"/></svg>`
-
+  const saveIcon = `<svg width="24" height="24" viewBox="0 0 24 24"><path fill="#eeeeee" d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"></path></svg>`
+  
   useEffect(() => {
     fetch(url)
       .then((response) => {
@@ -28,40 +31,40 @@ export default function App() {
       })
       .then((data) => setFiles(data.files || []))
       .finally(() => setLoading(false));
-      
+
   }, []);
   const fetchAllFiles = async () => {
     setLoading(true);
     setError(null);
     let allFiles = [];
     let nextPageToken = null;
-  
+
     do {
       let apiUrl = `https://www.googleapis.com/drive/v3/files?q='${folderId}' in parents&key=${apiKey}&pageSize=100`;
-      
+
       if (nextPageToken) {
         apiUrl += `&pageToken=${nextPageToken}`;
       }
-  
+
       try {
         const response = await fetch(apiUrl);
         if (!response.ok) {
           throw new Error("Failed to fetch file list.");
         }
-  
+
         const data = await response.json();
         allFiles = [...allFiles, ...data.files];
-        nextPageToken = data.nextPageToken; 
+        nextPageToken = data.nextPageToken;
       } catch (err) {
         setError(err);
         break;
       }
     } while (nextPageToken);
-  
+
     setFiles(allFiles);
     setLoading(false);
   };
-  
+
   useEffect(() => {
     fetchAllFiles();
   }, []);
@@ -71,17 +74,17 @@ export default function App() {
       console.error("O arquivo não é um CBZ.");
       return;
     }
-    
+
     const fileUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}`;
-    setCurrentFile({ fileName, images: [], progress: "Carregando..." });
-    setOverlay(true); 
+    setCurrentFile({ fileName, images: [], progress: "loading..." });
+    setOverlay(true);
 
     fetch(fileUrl)
       .then((response) => response.blob())
       .then((arrayBuffer) => processComic(arrayBuffer, fileName))
   };
-  
-  
+
+
   const processComic = async (arrayBuffer, fileName) => {
     const zip = await JSZip.loadAsync(arrayBuffer);
     const imageFiles = [];
@@ -102,9 +105,9 @@ export default function App() {
   function extractInfoFromTitle(title) {
     const regex = /^(.*?)\s(\d{3})\s\((\d{4})\)/;
     const match = title.match(regex);
-  
+
     if (!match) return { titulo: "Desconhecido", edicao: "?", ano: "?" };
-  
+
     return {
       titulo: match[1],
       edicao: match[2],
@@ -119,63 +122,74 @@ export default function App() {
       edition.includes(busca)
     );
   });
+  const toggleSaved = (id) => { setSaved(prevSaved => ({ ...prevSaved, [id]: !prevSaved[id]  })); };
+
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       <div className="flex justify-between items-center py-4 px-12 flex-wrap mb-12 gap-5">
         <img src="/assets/logo.webp" width={120} />
-        <input type="text" placeholder="Seek edition..." onInput={(e) => setBusca(e.target.value)} className="w-full lg:min-w-[unset] grow lg:order-[unset] order-3 lg:grow-0 px-5 p-2 text-gray-300 lg:w-1/2 bg-white/10 rounded-xl"/>
-        <button dangerouslySetInnerHTML={{__html: list ? listIcon : columnIcon}} onClick={() =>setList(prvLst => !prvLst)}></button>
+        <input type="text" placeholder="Seek edition..." onInput={(e) => setBusca(e.target.value)} className="w-full lg:min-w-[unset] grow lg:order-[unset] order-3 lg:grow-0 px-5 p-2 text-gray-300 lg:w-1/2 bg-white/10 rounded-xl" />
+        <button dangerouslySetInnerHTML={{__html:saveIcon}} className="h-12 w-auto left-2"></button>
+        <button dangerouslySetInnerHTML={{ __html: list ? columnIcon : listIcon }} ></button>
       </div>
 
-      {loading && <div className="text-center">Loading...</div>}
+      {loading && <div className="text-center">reading folder...</div>}
       {error && <div className="text-center text-red-500">Error: {error.message}</div>}
-  
+
       {!loading && !error && (
         <>
-        {!loading && !error && (
-        <>
-        {arquivosFiltrados.length > 0 ? (
+          {!loading && !error && (
+            <>
+              {arquivosFiltrados.length > 0 ? (
 
-           <ul className={`px-8 lg:px-0 flex ${list ? 'flex-col gap-3' : ''} flex-wrap gap-x-1 gap-y-7 items-center justify-around [&:has(li:not(:hover))_li:hover]:opacity-100 [&:has(li:hover)_li]:opacity-[.3] ${busca.length > 1 ? 'min-h-dvh' : 'min-h-[unset]'}`}>
-            <li className="absolute pointer-events-none"></li>
-            {arquivosFiltrados.map((file) => {
-              const info = extractInfoFromTitle(file.name);
-              return (
-                <li key={file.id} style={{"--bg":`url(/../assets/${info.edicao < 100 ? parseInt(info.edicao, 10) : info.edicao}.jpg)`}} data-year={info.ano} 
+                <ul className={`flex ${list ? 'flex-col gap-3 px-8 [&:has(li:not(:hover))_li:hover]:opacity-100 [&:has(li:hover)_li]:opacity-[.7]' : 'px-8 lg:px-4 gap-x-1 gap-y-7 [&:has(li:not(:hover))_li:hover]:opacity-100 [&:has(li:hover)_li]:opacity-[.3]'} flex-wrap items-center ${busca.length > 1 ? 'justify-start' : 'justify-around'}`}>
+                  <li className="absolute pointer-events-none"></li>
+                  {arquivosFiltrados.map((file, index) => {
+                    const info = extractInfoFromTitle(file.name);
+                    return (
+                      <li key={file.id} style={{ "--bg": `url(/../assets/${info.edicao < 100 ? parseInt(info.edicao, 10) : info.edicao}.jpg)` }} data-year={info.ano}
 
-                    className={`[background:var(--bg)] !bg-center aspect-[.65/1] overflow-hidden bg-gray-700 rounded-md relative h-96 duration-200 !bg-cover grow lg:grow-0 cursor-pointer
-                                ${list ? 
-                                'after:duration-200 after:content-[""] hover:after:opacity-100 after:opacity-0 after:!bg-center after:!bg-contain after:[background:--bg] after:h-0 after:absolute after:-top-20 after:w-56 hover:after:h-80 after:right-0 after:rounded-xl after:z-40' :
-                                'after:opacity-75 after:content-[""] after:absolute after:bottom-0 after:w-full after:bg-[linear-gradient(to_top,black_0%,transparent_100%)] after:h-full'}`
-                                }>
-  
-                  <div className={`relative p-4 flex z-20  ${list ? 'flex-row z-20' : 'flex-col justify-end h-full'}`}>
-                    <h3 className={`${list ? 'text-base' : 'text-lg'} font-semibold`}>
-                      {info.titulo} <span className="text-gray-400">#{info.edicao}</span>
-                    </h3>
-                    <span className="text-[#f4ed24] bg-[#303539] absolute top-0 right-3 text-lg px-[.6rem] py-[.2rem] font-bold">{info.ano}</span>
+                        className={`!bg-center rounded-md relative ${list ? 'h-auto w-full' : 'bg-gray-700 h-96 aspect-[.65/1] overflow-hidden [background:var(--bg)]'} duration-200 transition-all !bg-cover grow lg:grow-0 cursor-pointer
+                                after:duration-200 after:content-[""] after:absolute
+                                ${list ?
+                            'hover:after:opacity-100 after:opacity-0 after:!bg-center after:!bg-contain after:[background:--bg] after:h-0 after:-top-20 after:w-56 hover:after:h-80 after:right-0 after:rounded-xl after:z-40' :
+                            'after:opacity-75 after:bottom-0 after:w-full after:bg-[linear-gradient(to_top,black_0%,transparent_100%)] after:h-full'}`
+                        }>
+                        
+                        <div className={`relative flex z-20  ${list ? 'flex-row z-20 py-0 px-3 items-center' : 'p-4 flex-col justify-end h-full'}`}>
+                          <h3 className={`${list ? 'text-sm order-1' : 'text-lg'} font-semibold`}>
+                            {list ? file.name : (info.titulo, <span className="text-gray-200">#{info.edicao}</span>)}
+                          </h3>
+                          <span className={`text-[#f4ed24] bg-[#303539] absolute top-0 right-3 text-lg px-[.6rem] py-[.2rem] font-bold ${list ? 'hidden' : ''}`}>{info.ano}</span>
 
-                    <button onClick={() => openComicFromDrive(file.id, file.name)} className={`mt-2 bg-[#f4ed24] hover:bg-[#00bcf0] text-[#303539] rounded transition z-20 ${list ? 'ml-12 py-1 px-2' : 'py-2 px-4'}`}
-                    >
-                      Read
-                    </button>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-
-        ) : (
-          <p className="text-center">Issue not found.</p>
-        )}
-      </>
+                          <div className="flex items-center justify-between">
+                            <button onClick={() => openComicFromDrive(file.id, file.name)}
+                              className={`bg-[#f4ed24] hover:bg-[#00bcf0] text-[#303539] rounded transition z-20 ${list ? 'mr-4 py-1 px-2 order-0' : 'py-2 px-4 w-auto'}`}
+                            >
+                              Read
+                            </button>
+                            <button dangerouslySetInnerHTML={{__html:saveIcon}} className={`h-12 w-auto ${list ? 'mr-8' : ''} ${!saved ? '[&_path]:fill-[#c8412d]' : '[&_path]:fill-[#eeeeee]'}`} onClick={() => toggleSaved(info.edicao)}></button>
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="text-center">Issue not found.</p>
+              )}
+            </>
+          )}
+        </>
       )}
-      </>
-      )}
+      {currentFile && <ComicReader file={currentFile} overlay={overlay} setOverlay={setOverlay} />}
 
-      {currentFile && <ComicReader file={currentFile} overlay={overlay} setOverlay={setOverlay}/>}
+      <footer className="flex justify-center gap-4 text-xs text-gray-300 pt-32 pb-12">
+        <a href="https://github.com/brunofranciscojs/Comic-Reader" target="_blank">see on github</a>
+        <a href="https://brunofrancisco.com.br" target="_blank">webiste</a>
+      </footer>
     </div>
   );
-  
+
 }
