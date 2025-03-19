@@ -124,7 +124,7 @@ export default function App() {
     <div className="min-h-screen bg-gray-900 text-white">
       <div className="flex justify-between items-center py-4 px-12 flex-wrap mb-12 gap-5">
         <img src="/assets/logo.webp" width={120} />
-        <input type="text" placeholder="Seek by issue..." onInput={(e) => setBusca(e.target.value)} className="w-full lg:min-w-[unset] grow lg:order-[unset] order-3 lg:grow-0 px-5 p-2 text-gray-300 lg:w-1/2 bg-white/10 rounded-xl"/>
+        <input type="text" placeholder="Seek edition..." onInput={(e) => setBusca(e.target.value)} className="w-full lg:min-w-[unset] grow lg:order-[unset] order-3 lg:grow-0 px-5 p-2 text-gray-300 lg:w-1/2 bg-white/10 rounded-xl"/>
         <button dangerouslySetInnerHTML={{__html: list ? listIcon : columnIcon}} onClick={() =>setList(prvLst => !prvLst)}></button>
       </div>
 
@@ -132,61 +132,47 @@ export default function App() {
       {error && <div className="text-center text-red-500">Error: {error.message}</div>}
   
       {!loading && !error && (
-  <>
-    {arquivosFiltrados.length > 0 ? (
-      <ul
-        className={`px-8 lg:px-${list ? "4" : "0"} flex ${list ? "flex-col gap-3 pb-44" : "flex-wrap gap-x-1 gap-y-7 justify-around"} items-center 
-        [&:has(li:not(:hover))_li:hover]:opacity-100 [&:has(li:hover)_li]:opacity-[${list ? ".6" : ".3"}]`}
-        style={{ minHeight: busca.length > 1 ? "100dvh" : "auto" }}
-      >
-        <li className="absolute pointer-events-none"></li>
-        {arquivosFiltrados.map((file) => {
-          const info = extractInfoFromTitle(file.name);
-          return <FileItem key={file.id} file={file} info={info} isGrid={!list} />;
-        })}
-      </ul>
-    ) : (
-      <p className="text-center">No file.</p>
-    )}
-  </>
-)}
+        <>
+        {!loading && !error && (
+        <>
+        {arquivosFiltrados.length > 0 ? (
 
-// Componente separado para evitar código repetitivo
-const FileItem = ({ file, info, isGrid }) => {
-  const bgImage = `url(/../assets/${info.edicao < 100 ? parseInt(info.edicao, 10) : info.edicao}.jpg)`;
+           <ul className={`px-8 lg:px-0 flex ${list ? 'flex-col gap-3' : ''} flex-wrap gap-x-1 gap-y-7 items-center justify-around [&:has(li:not(:hover))_li:hover]:opacity-100 [&:has(li:hover)_li]:opacity-[.3] ${busca.length > 1 ? 'min-h-dvh' : 'min-h-[unset]'}`}>
+            <li className="absolute pointer-events-none"></li>
+            {arquivosFiltrados.map((file) => {
+              const info = extractInfoFromTitle(file.name);
+              return (
+                <li key={file.id} style={{"--bg":`url(/../assets/${info.edicao < 100 ? parseInt(info.edicao, 10) : info.edicao}.jpg)`}} data-year={info.ano} 
 
-  return (
-    <li
-      data-year={info.ano}
-      style={{ "--bg": bgImage }}
-      className={`bg-gray-700 rounded-md relative duration-200 cursor-pointer 
-        ${isGrid ? "aspect-[.65/1] !bg-center overflow-hidden h-96 !bg-cover grow lg:grow-0" : "px-8 h-auto"} 
-        after:content-[''] after:absolute after:w-full 
-        ${isGrid ? "bg-[linear-gradient(to_top,black_0%,transparent_100%)] after:h-full" : "!bg-center !bg-contain after:h-0 after:-top-20 after:w-56 hover:after:h-80 after:right-0 after:rounded-xl after:z-40 after:opacity-0 hover:after:opacity-100"}
-      `}
-    >
-      <div className={`relative p-4 flex ${isGrid ? "flex-col justify-end h-full" : "flex-row"} z-20`}>
-        <h3 className={`${isGrid ? "text-lg" : "text-base"} font-semibold`}>
-          {isGrid ? `${info.titulo} ` : file.name}
-          {isGrid && <span className="text-gray-400">#{info.edicao}</span>}
-        </h3>
+                    className={`[background:var(--bg)] !bg-center aspect-[.65/1] overflow-hidden bg-gray-700 rounded-md relative h-96 duration-200 !bg-cover grow lg:grow-0 cursor-pointer
+                                ${list ? 
+                                'after:duration-200 after:content-[""] hover:after:opacity-100 after:opacity-0 after:!bg-center after:!bg-contain after:[background:--bg] after:h-0 after:absolute after:-top-20 after:w-56 hover:after:h-80 after:right-0 after:rounded-xl after:z-40' :
+                                'after:opacity-75 after:content-[""] after:absolute after:bottom-0 after:w-full after:bg-[linear-gradient(to_top,black_0%,transparent_100%)] after:h-full'}`
+                                }>
+  
+                  <div className={`relative p-4 flex z-20  ${list ? 'flex-row z-20' : 'flex-col justify-end h-full'}`}>
+                    <h3 className={`${list ? 'text-base' : 'text-lg'} font-semibold`}>
+                      {info.titulo} <span className="text-gray-400">#{info.edicao}</span>
+                    </h3>
+                    <span className="text-[#f4ed24] bg-[#303539] absolute top-0 right-3 text-lg px-[.6rem] py-[.2rem] font-bold">{info.ano}</span>
 
-        {isGrid && (
-          <span className="text-[#f4ed24] bg-[#303539] absolute top-0 right-3 text-lg px-[.6rem] py-[.2rem] font-bold">
-            {info.ano}
-          </span>
+                    <button onClick={() => openComicFromDrive(file.id, file.name)} className={`mt-2 bg-[#f4ed24] hover:bg-[#00bcf0] text-[#303539] rounded transition z-20 ${list ? 'ml-12 py-1 px-2' : 'py-2 px-4'}`}
+                    >
+                      Read
+                    </button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+
+        ) : (
+          <p className="text-center">Issue not found.</p>
         )}
-
-        <button
-          onClick={() => openComicFromDrive(file.id, file.name)}
-          className={`mt-2 bg-[#f4ed24] hover:bg-[#00bcf0] text-[#303539] ${isGrid ? "py-2 px-4 rounded" : "py-1 px-2 rounded ml-12"} transition z-20`}
-        >
-          Read
-        </button>
-      </div>
-    </li>
-  );
-};
+      </>
+      )}
+      </>
+      )}
 
       {currentFile && <ComicReader file={currentFile} overlay={overlay} setOverlay={setOverlay}/>}
     </div>
