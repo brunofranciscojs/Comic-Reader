@@ -28,7 +28,7 @@ export default function ComicReader({ file, setOverlay, overlay }) {
   
   return (
      (overlay &&
-      <div className="fixed backdrop-blur-md top-0 left-0 w-full h-dvh flex justify-center items-center z-50 [background:var(--bg)_#000d] bg-blend-multiply !bg-center !bg-[length:200px]" style={{"--bg":`url(/../assets/${bg}.jpg)`}}>
+      <div className="fixed backdrop-blur-md top-0 left-0 w-full h-dvh flex justify-center items-center [background:var(--bg)_#000d] bg-blend-multiply !bg-center !bg-[length:200px] z-[9999]" style={{"--bg":`url(/../assets/${bg}.jpg)`}}>
         <button className="bg-black text-white rounded-full w-5 h-5 absolute top-4 right-4 z-10" onClick={closeSlider}>X</button>
 
         <div className="flex justify-start absolute left-1/2 -translate-x-1/2 top-0 w-full px-12 py-5 backdrop-blur-md bg-black/40 z-[1] gap-5">

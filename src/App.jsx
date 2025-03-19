@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import ComicReader from "./components/ComicReader";
 import JSZip from "jszip";
+import ComicBook from './components/ComicBook'
 
 const apiKey = import.meta.env.VITE_API_KEY;
 const folderId = import.meta.env.VITE_FOLDER_ID;
@@ -15,6 +16,8 @@ export default function App() {
   const [busca, setBusca] = useState("");
   const [saved, setSaved] = useState({})
   const [hoverIndex, setHoverIndex] = useState(null);
+  const [comic, setComic] = useState(false)
+  const [info, setInfo] = useState('')
 
   const url = `https://www.googleapis.com/drive/v3/files?q='${folderId}'%20in%20parents&key=${apiKey}`;
   const listIcon = `<svg width="2rem" height="2rem" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 6h8m-8 6h10M9 18h8M5 3v18" color="currentColor"/></svg>`
@@ -49,7 +52,7 @@ export default function App() {
     let nextPageToken = null;
 
     do {
-      let apiUrl = `https://www.googleapis.com/drive/v3/files?q='${folderId}' in parents&key=${apiKey}&pageSize=100`;
+      let apiUrl = `https://www.googleapis.com/drive/v3/files?q='${folderId}'%20in%20parents&key=${apiKey}&pageSize=100`;
 
       if (nextPageToken) {
         apiUrl += `&pageToken=${nextPageToken}`;
@@ -78,7 +81,7 @@ export default function App() {
     fetchAllFiles();
   }, []);
 
-  const loadComic = (fileId, fileName) => {
+  const openComicFromDrive = (fileId, fileName) => {
     if (!fileName.toLowerCase().endsWith(".cbz")) {
       console.error("O arquivo não é um CBZ.");
       return;
@@ -92,7 +95,6 @@ export default function App() {
       .then((response) => response.blob())
       .then((arrayBuffer) => processComic(arrayBuffer, fileName))
   };
-
 
   const processComic = async (arrayBuffer, fileName) => {
     const zip = await JSZip.loadAsync(arrayBuffer);
@@ -153,7 +155,7 @@ export default function App() {
                 <ul className={`flex ${list ? 
                                'flex-col gap-3 px-8 ' : 
                                'px-8 lg:px-4 gap-x-1 gap-y-7  '} 
-                                flex-wrap items-center ${busca.length > 1 ? 'justify-start' : 'justify-around'}`}>
+                                flex-wrap items-center ${busca.length > 1 ? 'justify-start' : 'justify-around'} ${comic ? 'pointer-events-none' : ''}`}>
 
                   <li className="absolute pointer-events-none"></li>
 
@@ -162,11 +164,12 @@ export default function App() {
                     return (
                       <li style={{ "--bg": `url(/../assets/${info.edicao < 100 ? parseInt(info.edicao, 10) : info.edicao}.jpg)`, backgroundSize:'100%', filter: `opacity(${getOpacity(index)}) saturate(${getOpacity(index + 5)})`,}} 
                           key={file.id}
-                          data-year={info.ano} 
-                          onMouseEnter={() => setHoverIndex(index)}
+                          data-year={info.ano}
+                          data-info={JSON.stringify({ fileName: file.name, id: file.id })}
+                          onMouseEnter={() => (setHoverIndex(index), setInfo(file.name))}
                           onMouseLeave={() => setHoverIndex(null)}
 
-                        className={`!bg-center rounded-md relative hover:!bg-[length:110%] hover:!grayscale-0 duration-200 transition-all grow lg:grow-0 cursor-pointer after:duration-200 after:content-[""] after:absolute 
+                        className={`!bg-center rounded-md relative hover:!bg-[length:110%] hover:!grayscale-0 duration-700 transition-all grow lg:grow-0 cursor-pointer after:duration-200 after:content-[""] after:absolute 
                                   ${list ? 'h-auto w-full' : 'bg-gray-700 h-96 aspect-[.65/1] overflow-hidden [background:var(--bg)]'}
                                  ${list ?
                             'hover:after:opacity-100 after:opacity-0 after:!bg-center after:!bg-contain after:[background:--bg] after:h-0 after:-top-20 after:w-56 hover:after:h-80 after:right-0 after:rounded-xl after:z-40' :
@@ -174,13 +177,14 @@ export default function App() {
                         }>
                         
                         <div className={`relative flex z-20  ${list ? 'flex-row z-20 py-0 px-3 items-center' : 'p-4 flex-col justify-end h-full'}`}>
+                          <div className="absolute top-0 left-0 w-full h-[85%] z-50" onClick={() => setComic(true)}></div>
                           <h3 className={`${list ? 'text-sm order-1' : 'text-lg'} font-semibold`}>
                             {list ? file.name : (info.titulo, <span className="text-gray-200">#{info.edicao}</span>)}
                           </h3>
                           <span className={`text-[#f4ed24] bg-[#303539] absolute top-0 right-3 text-lg px-[.6rem] py-[.2rem] font-bold ${list ? 'hidden' : ''}`}>{info.ano}</span>
 
                           <div className="flex items-center justify-between">
-                            <button onClick={() => loadComic(file.id, file.name)} 
+                            <button onClick={() => openComicFromDrive(file.id, file.name)}
                                     className={`bg-[#f4ed24] hover:bg-[#00bcf0] text-[#303539] rounded transition z-20 
                                     ${list ? 'mr-4 py-1 px-2 order-0' : 'py-2 px-4 w-auto'}`}>
                               Read
@@ -188,7 +192,8 @@ export default function App() {
                             <button dangerouslySetInnerHTML={{__html:saveIcon}} className={`h-12 w-auto ${list ? 'mr-8' : ''} ${!saved ? '[&_path]:fill-[#c8412d]' : '[&_path]:fill-[#eeeeee]'}`} onClick={() => toggleSaved(info.edicao)}></button>
                           </div>
                         </div>
-                      </li>
+                        
+                    </li>
                     );
                   })}
                 </ul>
@@ -199,6 +204,8 @@ export default function App() {
           )}
         </>
       {currentFile && <ComicReader file={currentFile} overlay={overlay} setOverlay={setOverlay} />}
+      {comic && <ComicBook file={info} setComic={setComic} openComicFromDrive={openComicFromDrive}/>}
+
 
       <footer className="flex justify-center gap-4 text-xs text-gray-300 pt-32 pb-12">
         <a href="https://github.com/brunofranciscojs/Comic-Reader" target="_blank">see on github</a>
