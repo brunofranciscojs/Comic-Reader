@@ -14,7 +14,7 @@ export default function App() {
   const [list, setList] = useState(false)
   const [busca, setBusca] = useState("");
   const [saved, setSaved] = useState({})
-
+  const [hoverIndex, setHoverIndex] = useState(null);
 
   const url = `https://www.googleapis.com/drive/v3/files?q='${folderId}'%20in%20parents&key=${apiKey}`;
   const listIcon = `<svg width="2rem" height="2rem" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 6h8m-8 6h10M9 18h8M5 3v18" color="currentColor"/></svg>`
@@ -33,6 +33,15 @@ export default function App() {
       .finally(() => setLoading(false));
 
   }, []);
+
+  const getOpacity = (index) => {
+    if (hoverIndex === null) return 1; 
+    const diff = Math.abs(hoverIndex - index);
+    if (diff === 0) return 1; 
+    if (diff <= 4) return (1 - diff * 0.2).toFixed(2);
+    return 0.1;
+  };
+
   const fetchAllFiles = async () => {
     setLoading(true);
     setError(null);
@@ -69,7 +78,7 @@ export default function App() {
     fetchAllFiles();
   }, []);
 
-  const openComicFromDrive = (fileId, fileName) => {
+  const loadComic = (fileId, fileName) => {
     if (!fileName.toLowerCase().endsWith(".cbz")) {
       console.error("O arquivo não é um CBZ.");
       return;
@@ -99,14 +108,14 @@ export default function App() {
       }
     }
 
-    setCurrentFile({ fileName, images: imageFiles, progress: "Finalizado!" });
+    setCurrentFile({ fileName, images: imageFiles, progress: "Loaded!" });
   };
 
   function extractInfoFromTitle(title) {
     const regex = /^(.*?)\s(\d{3})\s\((\d{4})\)/;
     const match = title.match(regex);
 
-    if (!match) return { titulo: "Desconhecido", edicao: "?", ano: "?" };
+    if (!match) return { titulo: "unknown", edicao: "?", ano: "?" };
 
     return {
       titulo: match[1],
@@ -124,7 +133,6 @@ export default function App() {
   });
   const toggleSaved = (id) => { setSaved(prevSaved => ({ ...prevSaved, [id]: !prevSaved[id]  })); };
 
-
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       <div className="flex justify-between items-center py-4 px-12 flex-wrap mb-12 gap-5">
@@ -137,22 +145,30 @@ export default function App() {
       {loading && <div className="text-center">reading folder...</div>}
       {error && <div className="text-center text-red-500">Error: {error.message}</div>}
 
-      {!loading && !error && (
         <>
           {!loading && !error && (
             <>
               {arquivosFiltrados.length > 0 ? (
 
-                <ul className={`flex ${list ? 'flex-col gap-3 px-8 [&:has(li:not(:hover))_li:hover]:opacity-100 [&:has(li:hover)_li]:opacity-[.7]' : 'px-8 lg:px-4 gap-x-1 gap-y-7 [&:has(li:not(:hover))_li:hover]:opacity-100 [&:has(li:hover)_li]:opacity-[.3]'} flex-wrap items-center ${busca.length > 1 ? 'justify-start' : 'justify-around'}`}>
+                <ul className={`flex ${list ? 
+                               'flex-col gap-3 px-8 ' : 
+                               'px-8 lg:px-4 gap-x-1 gap-y-7  '} 
+                                flex-wrap items-center ${busca.length > 1 ? 'justify-start' : 'justify-around'}`}>
+
                   <li className="absolute pointer-events-none"></li>
+
                   {arquivosFiltrados.map((file, index) => {
                     const info = extractInfoFromTitle(file.name);
                     return (
-                      <li key={file.id} style={{ "--bg": `url(/../assets/${info.edicao < 100 ? parseInt(info.edicao, 10) : info.edicao}.jpg)` }} data-year={info.ano}
+                      <li style={{ "--bg": `url(/../assets/${info.edicao < 100 ? parseInt(info.edicao, 10) : info.edicao}.jpg)`, backgroundSize:'100%', filter: `opacity(${getOpacity(index)}) saturate(${getOpacity(index + 5)})`,}} 
+                          key={file.id}
+                          data-year={info.ano} 
+                          onMouseEnter={() => setHoverIndex(index)}
+                          onMouseLeave={() => setHoverIndex(null)}
 
-                        className={`!bg-center rounded-md relative ${list ? 'h-auto w-full' : 'bg-gray-700 h-96 aspect-[.65/1] overflow-hidden [background:var(--bg)]'} duration-200 transition-all !bg-cover grow lg:grow-0 cursor-pointer
-                                after:duration-200 after:content-[""] after:absolute
-                                ${list ?
+                        className={`!bg-center rounded-md relative hover:!bg-[length:110%] hover:!grayscale-0 duration-200 transition-all grow lg:grow-0 cursor-pointer after:duration-200 after:content-[""] after:absolute 
+                                  ${list ? 'h-auto w-full' : 'bg-gray-700 h-96 aspect-[.65/1] overflow-hidden [background:var(--bg)]'}
+                                 ${list ?
                             'hover:after:opacity-100 after:opacity-0 after:!bg-center after:!bg-contain after:[background:--bg] after:h-0 after:-top-20 after:w-56 hover:after:h-80 after:right-0 after:rounded-xl after:z-40' :
                             'after:opacity-75 after:bottom-0 after:w-full after:bg-[linear-gradient(to_top,black_0%,transparent_100%)] after:h-full'}`
                         }>
@@ -164,9 +180,9 @@ export default function App() {
                           <span className={`text-[#f4ed24] bg-[#303539] absolute top-0 right-3 text-lg px-[.6rem] py-[.2rem] font-bold ${list ? 'hidden' : ''}`}>{info.ano}</span>
 
                           <div className="flex items-center justify-between">
-                            <button onClick={() => openComicFromDrive(file.id, file.name)}
-                              className={`bg-[#f4ed24] hover:bg-[#00bcf0] text-[#303539] rounded transition z-20 ${list ? 'mr-4 py-1 px-2 order-0' : 'py-2 px-4 w-auto'}`}
-                            >
+                            <button onClick={() => loadComic(file.id, file.name)} 
+                                    className={`bg-[#f4ed24] hover:bg-[#00bcf0] text-[#303539] rounded transition z-20 
+                                    ${list ? 'mr-4 py-1 px-2 order-0' : 'py-2 px-4 w-auto'}`}>
                               Read
                             </button>
                             <button dangerouslySetInnerHTML={{__html:saveIcon}} className={`h-12 w-auto ${list ? 'mr-8' : ''} ${!saved ? '[&_path]:fill-[#c8412d]' : '[&_path]:fill-[#eeeeee]'}`} onClick={() => toggleSaved(info.edicao)}></button>
@@ -182,7 +198,6 @@ export default function App() {
             </>
           )}
         </>
-      )}
       {currentFile && <ComicReader file={currentFile} overlay={overlay} setOverlay={setOverlay} />}
 
       <footer className="flex justify-center gap-4 text-xs text-gray-300 pt-32 pb-12">
