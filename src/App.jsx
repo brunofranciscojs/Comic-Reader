@@ -131,7 +131,7 @@ export default function App() {
         <img src="/assets/logo.webp" width={120} />
         <input type="text" placeholder="Seek edition..." onInput={(e) => setBusca(e.target.value)} className="w-full lg:min-w-[unset] grow lg:order-[unset] order-3 lg:grow-0 px-5 p-2 text-gray-300 lg:w-1/2 bg-white/10 rounded-xl" />
         <button dangerouslySetInnerHTML={{__html:saveIcon}} className="h-12 w-auto left-2"></button>
-        <button dangerouslySetInnerHTML={{ __html: list ? columnIcon : listIcon }} ></button>
+        <button dangerouslySetInnerHTML={{ __html: list ? columnIcon : listIcon }} onClick={() => setList(prv => !prv)}></button>
       </div>
 
       {loading && <div className="text-center">reading folder...</div>}
