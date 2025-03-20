@@ -31,7 +31,7 @@ export default function ComicBook({file, setComic, openComicFromDrive}){
 
     return(
          
-        <div className="flex justify-between p-12 [background:var(--bg)_#000d] bg-blend-multiply !bg-center fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[90dvh] max-w-[80%] w-full rounded-2xl z-[999]" style={{"--bg":`url(/../assets/${bg}.jpg)`}}>
+        <div className="flex justify-between flex-col lg:flex-row gap-8 p-12 [background:var(--bg)_#000d] bg-blend-multiply !bg-center fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[90dvh] max-w-[80%] w-full rounded-2xl z-[999]" style={{"--bg":`url(/../assets/${bg}.jpg)`}}>
             <button className="bg-black text-white rounded-full w-5 h-5 absolute top-4 right-4 z-10" onClick={() => setComic(false)}>X</button>
             <div>
                 <h3 className="text-3xl"><span className="font-['impact'] text-[#f4ed24] text-3xl">Comic:</span> {info.title}</h3>
