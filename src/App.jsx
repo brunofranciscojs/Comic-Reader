@@ -19,7 +19,7 @@ export default function App() {
   const [comic, setComic] = useState(false)
   const [infos, setInfos] = useState(null)
 
-  const url = `https://www.googleapis.com/drive/v3/files?q='${folderId}'%20in%20parents&key=${apiKey}`;
+  const url = `https://www.googleapis.com/drive/v3/files?q='${folderId}' in parents&fields=files(id, name, description)&key=${apiKey}`;
   const listIcon = `<svg width="2rem" height="2rem" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 6h8m-8 6h10M9 18h8M5 3v18" color="currentColor"/></svg>`
   const columnIcon = `<svg width="2rem" height="2rem" viewBox="0 0 24 24"><path fill="currentColor" d="M16 5v13h5V5M4 18h5V5H4m6 13h5V5h-5z"/></svg>`
   const saveIcon = `<svg width="24" height="24" viewBox="0 0 24 24"><path fill="#eeeeee" d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"></path></svg>`
@@ -52,7 +52,7 @@ export default function App() {
     let nextPageToken = null;
 
     do {
-      let apiUrl = `https://www.googleapis.com/drive/v3/files?q='${folderId}'%20in%20parents&key=${apiKey}&pageSize=100`;
+      let apiUrl = `https://www.googleapis.com/drive/v3/files?q='${folderId}' in parents&fields=nextPageToken,files(id, name, description)&key=${apiKey}&pageSize=100`;
 
       if (nextPageToken) {
         apiUrl += `&pageToken=${nextPageToken}`;
@@ -90,24 +90,10 @@ export default function App() {
     const fileUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}`;
     setCurrentFile({ fileName, images: [], progress: "loading..." });
     setOverlay(true);
-  
+    
     fetch(fileUrl)
       .then((response) => response.blob())
       .then((arrayBuffer) => processComic(arrayBuffer, fileName));
-  };
-  
-  const openComic = (file) => {
-    const info = extractInfoFromTitle(file.name);
-    const comicInfo = {
-      fileName: file.name,
-      id: file.id,
-      titulo: info.titulo,
-      edicao: info.edicao,
-      ano: info.ano,
-    };
-  
-    setInfos(JSON.stringify(comicInfo)); // Passando a string JSON corretamente
-    setComic(true);
   };
 
   const processComic = async (arrayBuffer, fileName) => {
@@ -123,10 +109,10 @@ export default function App() {
         imageFiles.push({ url, filename: fileName });
       }
     }
-
     setCurrentFile({ fileName, images: imageFiles, progress: "Loaded!" });
   };
 
+  
   function extractInfoFromTitle(title) {
     const regex = /^(.*?)\s(\d{3})\s\((\d{4})\)/;
     const match = title.match(regex);
@@ -140,13 +126,20 @@ export default function App() {
     };
   }
 
-  const arquivosFiltrados = files.filter((buscaItem) => {
-    const edition = extractInfoFromTitle(buscaItem.name).edicao;
+  const arquivosFiltrados = files
+  .filter((buscaItem) => {
+    const { edicao } = extractInfoFromTitle(buscaItem.name);
     return (
       buscaItem.name.toLowerCase().includes(busca.toLowerCase()) ||
-      edition.includes(busca)
+      edicao.includes(busca)
     );
+  })
+  .sort((a, b) => {
+    const edicaoA = parseInt(extractInfoFromTitle(a.name).edicao, 10) || 0;
+    const edicaoB = parseInt(extractInfoFromTitle(b.name).edicao, 10) || 0;
+    return edicaoA - edicaoB;
   });
+
   const toggleSaved = (id) => { setSaved(prevSaved => ({ ...prevSaved, [id]: !prevSaved[id]  })); };
 
   return (
@@ -179,7 +172,7 @@ export default function App() {
                       <li style={{ "--bg": `url(/../assets/${info.edicao < 100 ? parseInt(info.edicao, 10) : info.edicao}.jpg)`, backgroundSize:'100%', filter: `opacity(${getOpacity(index)}) saturate(${getOpacity(index + 5)})`,}} 
                           key={file.id}
                           data-year={info.ano}
-                          onMouseEnter={() => { setHoverIndex(index); setInfos({ fileName: file.name, id: file.id }) }}
+                          onMouseEnter={() => { setHoverIndex(index); setInfos({ fileName: file.name, id: file.id, description: file.description }) }}
                           onMouseLeave={() => setHoverIndex(null)}
 
                         className={`!bg-center rounded-md relative hover:!bg-[length:110%] hover:!grayscale-0 duration-700 transition-all grow lg:grow-0 cursor-pointer after:duration-200 after:content-[""] after:absolute 
