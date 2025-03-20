@@ -3,8 +3,7 @@ import {FastAverageColor} from "fast-average-color";
 
 export default function ComicBook({file, setComic, openComicFromDrive}){
       const [bg, setBg] = useState(null)
-      const [bgColor, setBgColor] = useState("#000a");
-      const [isDark, setIsDark] = useState(false);
+      const [bgColor, setBgColor] = useState("#000");
       
       useEffect(() => {    
         const bgFile = file.fileName.split('(')[0].split('e ')[1] < 100 ? parseInt(file.fileName.split('(')[0].split('e ')[1], 10) : file.fileName.split('(')[0].split('e ')[1].trim()
