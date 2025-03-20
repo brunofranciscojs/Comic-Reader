@@ -141,12 +141,16 @@ export default function App() {
   });
 
   const toggleSaved = (id) => { setSaved(prevSaved => ({ ...prevSaved, [id]: !prevSaved[id]  })); };
+  const eraseSearch = (e) => { setBusca(''); e.target.nextElementSibling.value = '' }
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       <div className="flex justify-between items-center py-4 px-12 flex-wrap mb-12 gap-5">
         <img src="/assets/logo.webp" width={120} />
-        <input type="text" placeholder="Seek edition..." onInput={(e) => setBusca(e.target.value)} className="w-full lg:min-w-[unset] grow lg:order-[unset] order-3 lg:grow-0 px-5 p-2 text-gray-300 lg:w-1/2 bg-white/10 rounded-xl" />
+        <div className="relative w-full lg:min-w-[unset] grow lg:order-[unset] order-3 lg:grow-0 lg:w-1/2">
+          {busca.length > 0 && <button className="bg-white/20 text-white text-sm rounded-full w-5 h-5 absolute top-2 right-4 border-0 z-10 leading-[0]" onClick={eraseSearch}>x</button>}
+          <input type="text" placeholder="Seek edition..." onInput={(e) => setBusca(e.target.value)} className="w-full px-5 p-2 text-gray-300  bg-white/10 rounded-xl" />
+        </div>
         <button dangerouslySetInnerHTML={{__html:saveIcon}} className="h-12 w-auto left-2"></button>
         <button dangerouslySetInnerHTML={{ __html: list ? columnIcon : listIcon }} onClick={() => setList(prv => !prv)}></button>
       </div>
