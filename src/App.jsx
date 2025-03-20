@@ -17,7 +17,7 @@ export default function App() {
   const [saved, setSaved] = useState({})
   const [hoverIndex, setHoverIndex] = useState(null);
   const [comic, setComic] = useState(false)
-  const [info, setInfo] = useState('')
+  const [infos, setInfos] = useState(null)
 
   const url = `https://www.googleapis.com/drive/v3/files?q='${folderId}'%20in%20parents&key=${apiKey}`;
   const listIcon = `<svg width="2rem" height="2rem" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 6h8m-8 6h10M9 18h8M5 3v18" color="currentColor"/></svg>`
@@ -86,14 +86,28 @@ export default function App() {
       console.error("O arquivo não é um CBZ.");
       return;
     }
-
+  
     const fileUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}`;
     setCurrentFile({ fileName, images: [], progress: "loading..." });
     setOverlay(true);
-
+  
     fetch(fileUrl)
       .then((response) => response.blob())
-      .then((arrayBuffer) => processComic(arrayBuffer, fileName))
+      .then((arrayBuffer) => processComic(arrayBuffer, fileName));
+  };
+  
+  const openComic = (file) => {
+    const info = extractInfoFromTitle(file.name);
+    const comicInfo = {
+      fileName: file.name,
+      id: file.id,
+      titulo: info.titulo,
+      edicao: info.edicao,
+      ano: info.ano,
+    };
+  
+    setInfos(JSON.stringify(comicInfo)); // Passando a string JSON corretamente
+    setComic(true);
   };
 
   const processComic = async (arrayBuffer, fileName) => {
@@ -165,8 +179,7 @@ export default function App() {
                       <li style={{ "--bg": `url(/../assets/${info.edicao < 100 ? parseInt(info.edicao, 10) : info.edicao}.jpg)`, backgroundSize:'100%', filter: `opacity(${getOpacity(index)}) saturate(${getOpacity(index + 5)})`,}} 
                           key={file.id}
                           data-year={info.ano}
-                          data-info={JSON.stringify({ fileName: file.name, id: file.id })}
-                          onMouseEnter={() => (setHoverIndex(index), setInfo(file.name))}
+                          onMouseEnter={() => { setHoverIndex(index); setInfos({ fileName: file.name, id: file.id }) }}
                           onMouseLeave={() => setHoverIndex(null)}
 
                         className={`!bg-center rounded-md relative hover:!bg-[length:110%] hover:!grayscale-0 duration-700 transition-all grow lg:grow-0 cursor-pointer after:duration-200 after:content-[""] after:absolute 
@@ -184,7 +197,7 @@ export default function App() {
                           <span className={`text-[#f4ed24] bg-[#303539] absolute top-0 right-3 text-lg px-[.6rem] py-[.2rem] font-bold ${list ? 'hidden' : ''}`}>{info.ano}</span>
 
                           <div className="flex items-center justify-between">
-                            <button onClick={() => openComicFromDrive(file.id, file.name)}
+                            <button onClick={() => openComicFromDrive(file.id, file.name)} 
                                     className={`bg-[#f4ed24] hover:bg-[#00bcf0] text-[#303539] rounded transition z-20 
                                     ${list ? 'mr-4 py-1 px-2 order-0' : 'py-2 px-4 w-auto'}`}>
                               Read
@@ -203,9 +216,8 @@ export default function App() {
             </>
           )}
         </>
-      {currentFile && <ComicReader file={currentFile} overlay={overlay} setOverlay={setOverlay} />}
-      {comic && <ComicBook file={info} setComic={setComic} openComicFromDrive={openComicFromDrive}/>}
-
+      {currentFile && <ComicReader file={currentFile} overlay={overlay} setOverlay={setOverlay} setComic={setComic}/>}
+      {comic && <ComicBook file={infos} setComic={setComic} openComicFromDrive={openComicFromDrive}/>}
 
       <footer className="flex justify-center gap-4 text-xs text-gray-300 pt-32 pb-12">
         <a href="https://github.com/brunofranciscojs/Comic-Reader" target="_blank">see on github</a>

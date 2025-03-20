@@ -4,10 +4,8 @@ export default function ComicBook({file, setComic, openComicFromDrive}){
       const [bg, setBg] = useState(null)
 
       useEffect(() => {
-        setBg(file.split('(')[0].split('e ')[1] < 100 ? parseInt(file.split('(')[0].split('e ')[1], 10) : file.split('(')[0].split('e ')[1].trim())
+        setBg(file.fileName.split('(')[0].split('e ')[1] < 100 ? parseInt(file.fileName.split('(')[0].split('e ')[1], 10) : file.fileName.split('(')[0].split('e ')[1].trim())
       }, [file]); 
-
-
 
       function extractInfoFromTitle(title) {
         const regex = /^(.*?)\s(\d{3})\s\((\d{4})\)/;
@@ -21,7 +19,7 @@ export default function ComicBook({file, setComic, openComicFromDrive}){
           ano: match[3],
         };
       }
-      const info = extractInfoFromTitle(file)
+      const info = extractInfoFromTitle(file.fileName)
       
       if (!file) {
         return <p>no file.</p>;
@@ -35,7 +33,7 @@ export default function ComicBook({file, setComic, openComicFromDrive}){
                 <h3 className="text-3xl"><span className="font-['impact'] text-[#f4ed24] text-3xl">Comic:</span> {info.titulo}</h3>
                 <h3 className="text-3xl"><span className="font-['impact'] text-[#f4ed24] text-3xl">Edition:</span> {info.edicao}</h3>
                 <h3 className="text-3xl"><span className="font-['impact'] text-[#f4ed24] text-3xl">Year:</span> {info.ano}</h3> <br />
-                <button onClick={() => openComicFromDrive(file.id, file)} className="mt-2 bg-[#f4ed24] hover:bg-[#00bcf0] text-[#303539] py-2 px-4 rounded transition z-20">
+                <button onClick={() => openComicFromDrive(file.id, file.fileName)} className="mt-2 bg-[#f4ed24] hover:bg-[#00bcf0] text-[#303539] py-2 px-4 rounded transition z-20">
                     Read
                 </button>
             </div>
