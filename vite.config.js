@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { VitePWA } from 'vite-plugin-pwa'
+import { VitePWA } from 'vite-plugin-pwa';
 
 const imagePaths = Array.from({ length: 145 }, (_, i) => `/assets/${i}.jpg`);
 
@@ -9,10 +9,11 @@ export default defineConfig({
     react(),
     VitePWA({ 
       registerType: 'autoUpdate',
+      includeAssets: ["comic.svg", ...imagePaths], // 🔥 MOVA PARA FORA DE workbox
       workbox: {
-      cleanupOutdatedCaches: false,
-      includeAssets: ["comic.svg", ...imagePaths],
-      manifest: {
+        cleanupOutdatedCaches: false,
+      },
+      manifest: { // 🔥 MOVA PARA FORA DE workbox
         name: "Invincible Comic Book Reader",
         short_name: "PWA",
         description: "read Invincible from start to finish",
@@ -33,7 +34,7 @@ export default defineConfig({
           },
         ],
       },
-    } })
+    }),
   ],
   optimizeDeps: {
     exclude: ['lucide-react'],
