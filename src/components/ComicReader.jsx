@@ -54,10 +54,10 @@ export default function ComicReader({ file, setOverlay, overlay, setComic, updat
           </span>
         </div>
 
-          {slider ? (<Splide options={{ perPage: 1, arrows: true, pagination:false, paginationDirection:'ttb', start: startPage, wheel: true, height:'100%' }} onMove={handleSlideChange} className="[&>#splide01-track]:h-dvh flex h-dvh z-[1]">
+          {slider ? (<Splide options={{ perPage: 1, arrows: true, pagination:false, start: startPage, wheel: true, direction:'ttb', height:'100%' }} onMove={handleSlideChange} className="[&>#splide01-track]:h-dvh flex h-dvh z-[1]">
             {file.images.map((image, index) => (
               <SplideSlide key={index}>
-                <ImageZoom src={image.url} className="max-w-full object-contain w-full rounded shadow-lg h-full [scale:.98]" data-splide-lazy={image.url} zoom="200" fullWidth={true} />
+                <ImageZoom src={image.url} className="max-w-full object-contain w-full rounded shadow-lg h-full [scale:.98] [&>img]:h-full [&>img]:w-auto [&>img]:object-contain ![background-color:transparent]" data-splide-lazy={image.url} zoom="200" fullWidth={true} />
               </SplideSlide>
             ))}
           </Splide>) : (
