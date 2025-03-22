@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { Splide, SplideSlide } from '@splidejs/react-splide';
 import '@splidejs/react-splide/css';
+import LoadingIcon from "./loadingIcon";
 
-
-export default function ComicReader({ file, setOverlay, overlay, setComic }) {
+export default function ComicReader({ file, setOverlay, overlay, setComic, updateProgress }) {
   const [slider, setSlider] = useState(false);
-  const loading = `<svg viewBox="0 0 25 25" fill="none"><g stroke-linecap="round" stroke-linejoin="round"></g><g> <path d="M4.5 12.5C4.5 16.9183 8.08172 20.5 12.5 20.5C16.9183 20.5 20.5 16.9183 20.5 12.5C20.5 8.08172 16.9183 4.5 12.5 4.5" stroke="#121923" stroke-width="1.2"></path> </g></svg>`
   const [bg, setBg] = useState(null)
 
   useEffect(() => {
@@ -23,6 +22,12 @@ export default function ComicReader({ file, setOverlay, overlay, setComic }) {
     setComic(false)
   }
 
+  const handleSlideChange = (splide) => {
+    const currentIndex = splide.index + 1;
+    updateProgress(file.fileName, currentIndex, file.images.length);
+  };
+  
+
   if (!file || !file.images) {
     return <p>no file.</p>;
   }
@@ -35,21 +40,23 @@ export default function ComicReader({ file, setOverlay, overlay, setComic }) {
         <div className="flex justify-start absolute left-1/2 -translate-x-1/2 top-0 w-full px-12 py-5 backdrop-blur-md bg-black/40 z-[1] gap-5">
          <img src="/assets/logo.webp" width={120} />
          <span className="text-[#f4ed24] text-3xl font-['impact']">
-          #{file.fileName.split('Invincible')[1].split('(')[0] < 100 ? parseInt(file.fileName.split('Invincible')[1].split('(')[0], 10) : file.fileName.split('Invincible')[1].split('(')[0] }
+          #{file.fileName.split('Invincible')[1].split('(')[0] < 100 ? 
+            parseInt(file.fileName.split('Invincible')[1].split('(')[0], 10) : 
+            file.fileName.split('Invincible')[1].split('(')[0] 
+            }
           </span>
         </div>
 
-          {slider ? (<Splide options={{ perPage: 1, arrows: true, pagination:true }} className="[&>#splide01-track]:h-dvh flex h-dvh z-[1]">
+          {slider ? (<Splide options={{ perPage: 1, arrows: true, pagination:true }} onMove={handleSlideChange} className="[&>#splide01-track]:h-dvh flex h-dvh z-[1]">
             {file.images.map((image, index) => (
               <SplideSlide key={index}>
                 <img src={image.url} className="max-w-full object-contain w-full rounded shadow-lg h-full [scale:.9] translate-y-8"/>
-                <span className="text-gray-300 absolute top-[1.6rem] left-[18rem] z-20">p. {index + 1}</span>
+                <span className="text-gray-300 absolute top-[1.6rem] left-[18rem] z-20" onClick={() => updateProgress((index + 1) / 10)}>p. {index + 1}</span>
               </SplideSlide>
             ))}
           </Splide>) : (
             <div className="flex justify-center items-center gap-5 flex-col">
-              <span className="animate-spin brightness-[20] w-12 h-12 block" 
-                    dangerouslySetInnerHTML={{__html:loading}} ></span>
+              <span className="animate-spin brightness-[20] w-12 h-12 block">{<LoadingIcon/>}</span>
               <span className="text-sm text-white block mx-auto">Unpacking .cbz file, please wait... </span>
             </div>
           )}

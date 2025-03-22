@@ -2,6 +2,10 @@ import React, { useState, useEffect } from "react";
 import ComicReader from "./components/ComicReader";
 import JSZip from "jszip";
 import ComicBook from './components/ComicBook'
+import ListIcon from "./components/listIcon";
+import ColumnIcon from "./components/columnIcon";
+import SaveIcon from "./components/saveIcon";
+import LoadingIcon from "./components/loadingIcon";
 
 const apiKey = import.meta.env.VITE_API_KEY;
 const folderId = import.meta.env.VITE_FOLDER_ID;
@@ -14,15 +18,13 @@ export default function App() {
   const [overlay, setOverlay] = useState(false)
   const [list, setList] = useState(false)
   const [busca, setBusca] = useState("");
-  const [saved, setSaved] = useState({})
+  const [saved, setSaved] = useState({});
   const [hoverIndex, setHoverIndex] = useState(null);
-  const [comic, setComic] = useState(false)
-  const [infos, setInfos] = useState(null)
+  const [comic, setComic] = useState(false);
+  const [infos, setInfos] = useState(null);
+  const [readProgress, setReadProgress] = useState({});
 
   const url = `https://www.googleapis.com/drive/v3/files?q='${folderId}' in parents&fields=files(id, name, description)&key=${apiKey}`;
-  const listIcon = `<svg width="2rem" height="2rem" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 6h8m-8 6h10M9 18h8M5 3v18" color="currentColor"/></svg>`
-  const columnIcon = `<svg width="2rem" height="2rem" viewBox="0 0 24 24"><path fill="currentColor" d="M16 5v13h5V5M4 18h5V5H4m6 13h5V5h-5z"/></svg>`
-  const saveIcon = `<svg width="24" height="24" viewBox="0 0 24 24"><path fill="#eeeeee" d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"></path></svg>`
   
   useEffect(() => {
     fetch(url)
@@ -45,41 +47,43 @@ export default function App() {
     return 0.1;
   };
 
-  const fetchAllFiles = async () => {
-    setLoading(true);
-    setError(null);
-    let allFiles = [];
-    let nextPageToken = null;
-
-    do {
-      let apiUrl = `https://www.googleapis.com/drive/v3/files?q='${folderId}' in parents&fields=nextPageToken,files(id, name, description)&key=${apiKey}&pageSize=100`;
-
-      if (nextPageToken) {
-        apiUrl += `&pageToken=${nextPageToken}`;
-      }
+  useEffect(() => {
+    const fetchAllFiles = async () => {
+      setLoading(true);
+      setError(null);
+      let allFiles = [];
+      let nextPageToken = null;
 
       try {
-        const response = await fetch(apiUrl);
-        if (!response.ok) {
-          throw new Error("Failed to fetch file list.");
-        }
+        do {
+          let apiUrl = `https://www.googleapis.com/drive/v3/files?q='${folderId}' in parents&fields=nextPageToken,files(id, name, description)&key=${apiKey}&pageSize=100`;
 
-        const data = await response.json();
-        allFiles = [...allFiles, ...data.files];
-        nextPageToken = data.nextPageToken;
+          if (nextPageToken) apiUrl += `&pageToken=${nextPageToken}`;
+
+          const response = await fetch(apiUrl);
+          if (!response.ok) throw new Error("Failed to fetch file list.");
+
+          const data = await response.json();
+          allFiles = [...allFiles, ...data.files];
+          nextPageToken = data.nextPageToken;
+        } while (nextPageToken);
+
+        setFiles(allFiles);
       } catch (err) {
-        setError(err);
-        break;
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
-    } while (nextPageToken);
+    };
 
-    setFiles(allFiles);
-    setLoading(false);
-  };
-
-  useEffect(() => {
     fetchAllFiles();
+
+    const storedProgress = localStorage.getItem("readingProgress");
+    if (storedProgress) {
+      setReadProgress(JSON.parse(storedProgress));
+    }
   }, []);
+
 
   const openComicFromDrive = (fileId, fileName) => {
     if (!fileName.toLowerCase().endsWith(".cbz")) {
@@ -100,8 +104,7 @@ export default function App() {
     const zip = await JSZip.loadAsync(arrayBuffer);
     const imageFiles = [];
     const imageExtensions = /\.(jpg|jpeg|png)$/i;
-    const fileEntries = Object.keys(zip.files);
-
+    const fileEntries = Object.keys(zip.files).sort();
     for (const fileName of fileEntries) {
       if (imageExtensions.test(fileName)) {
         const fileData = await zip.files[fileName].async("blob");
@@ -109,9 +112,22 @@ export default function App() {
         imageFiles.push({ url, filename: fileName });
       }
     }
-    setCurrentFile({ fileName, images: imageFiles, progress: "Loaded!" });
+    setCurrentFile({ fileName, images: imageFiles, progress: "Loaded!", totalPages: imageFiles.length });
   };
-
+  
+  const updateReadingProgress = (fileName, currentPage, totalPages) => {
+    const updatedProgress = {
+      ...readProgress,
+      [fileName]: {
+        page: currentPage,
+        total: totalPages,
+      },
+    };
+  
+    setReadProgress(updatedProgress);
+    localStorage.setItem("readingProgress", JSON.stringify(updatedProgress));
+  };
+  
   
   function extractInfoFromTitle(title) {
     const regex = /^(.*?)\s(\d{3})\s\((\d{4})\)/;
@@ -126,8 +142,7 @@ export default function App() {
     };
   }
 
-  const arquivosFiltrados = files
-  .filter((buscaItem) => {
+  const arquivosFiltrados = files.filter((buscaItem) => {
     const { edicao } = extractInfoFromTitle(buscaItem.name);
     return (
       buscaItem.name.toLowerCase().includes(busca.toLowerCase()) ||
@@ -151,8 +166,8 @@ export default function App() {
           {busca.length > 0 && <button className="bg-white/20 text-white text-sm rounded-full w-5 h-5 absolute top-2 right-4 border-0 z-10 leading-[0]" onClick={eraseSearch}>x</button>}
           <input type="text" placeholder="Seek edition..." onInput={(e) => setBusca(e.target.value)} className="w-full px-5 p-2 text-gray-300  bg-white/10 rounded-xl" />
         </div>
-        <button dangerouslySetInnerHTML={{__html:saveIcon}} className="h-12 w-auto left-2"></button>
-        <button dangerouslySetInnerHTML={{ __html: list ? columnIcon : listIcon }} onClick={() => setList(prv => !prv)}></button>
+        <button className="h-12 w-auto left-2"><SaveIcon/></button>
+        <button onClick={() => setList(prv => !prv)}>{list ? <ColumnIcon /> : <ListIcon />}</button>
       </div>
 
       {loading && <div className="text-center">reading folder...</div>}
@@ -172,40 +187,47 @@ export default function App() {
 
                   {arquivosFiltrados.map((file, index) => {
                     const info = extractInfoFromTitle(file.name);
-                    return (
-                      <li style={{ "--bg": `url(/../assets/${info.edicao < 100 ? parseInt(info.edicao, 10) : info.edicao}.jpg)`, backgroundSize:'100%', filter: `opacity(${getOpacity(index)}) saturate(${getOpacity(index + 5)})`,}} 
-                          key={file.id}
-                          data-year={info.ano}
-                          onMouseEnter={() => { setHoverIndex(index); setInfos({ fileName: file.name, id: file.id, description: file.description }) }}
-                          onMouseLeave={() => setHoverIndex(null)}
+                    const fileProgress = readProgress[file.name];
 
-                        className={`!bg-center rounded-md relative hover:!bg-[length:110%] hover:!grayscale-0 duration-700 transition-all grow lg:grow-0 cursor-pointer after:duration-200 after:content-[""] after:absolute 
-                                  ${list ? 'h-auto w-full' : 'bg-gray-700 h-96 aspect-[.65/1] overflow-hidden [background:var(--bg)]'}
-                                 ${list ?
-                            'hover:after:opacity-100 after:opacity-0 after:!bg-center after:!bg-contain after:[background:--bg] after:h-0 after:-top-20 after:w-56 hover:after:h-80 after:right-0 after:rounded-xl after:z-40' :
-                            'after:opacity-75 after:bottom-0 after:w-full after:bg-[linear-gradient(to_top,black_0%,transparent_100%)] after:h-full'}`
-                        }>
-                        
+                    return (
+                      <li key={file.id} style={{"--bg": `url(/../assets/${info.edicao < 100 ? parseInt(info.edicao, 10) : info.edicao}.jpg)`, backgroundSize: '100%',filter: `opacity(${getOpacity(index)}) saturate(${getOpacity(index + 5)})`, }}
+                          onMouseEnter={() => { setHoverIndex(index);setInfos({ fileName: file.name, id: file.id, description: file.description }) }}
+                          onMouseLeave={() => setHoverIndex(null)}
+                          className={`!bg-center rounded-md relative hover:!bg-[length:110%] hover:!grayscale-0 duration-700 transition-all grow lg:grow-0 cursor-pointer after:duration-200 after:content-[""] after:absolute 
+                                    ${list ? 'h-auto w-full' : 'bg-gray-700 h-96 aspect-[.65/1] overflow-hidden [background:var(--bg)]'}
+                                    ${list ? 'hover:after:opacity-100 after:opacity-0 after:!bg-center after:!bg-contain after:[background:--bg] after:h-0 after:-top-20 after:w-56 hover:after:h-80 after:right-0 after:rounded-xl after:z-40' :
+                                    'after:opacity-75 after:bottom-0 after:w-full after:bg-[linear-gradient(to_top,black_0%,transparent_100%)] after:h-full'}`}>
+
                         <div className={`relative flex z-20  ${list ? 'flex-row z-20 py-0 px-3 items-center' : 'p-4 flex-col justify-end h-full'}`}>
+
                           <div className="absolute top-0 left-0 w-full h-[85%] z-50" onClick={() => setComic(true)}></div>
                           <h3 className={`${list ? 'text-sm order-1' : 'text-lg'} font-semibold`}>
                             {list ? file.name : (info.titulo, <span className="text-gray-200">#{info.edicao}</span>)}
                           </h3>
+                          
                           <span className={`text-[#f4ed24] bg-[#303539] absolute top-0 right-3 text-lg px-[.6rem] py-[.2rem] font-bold ${list ? 'hidden' : ''}`}>{info.ano}</span>
 
-                          <div className="flex items-center justify-between">
-                            <button onClick={() => openComicFromDrive(file.id, file.name)} 
-                                    className={`bg-[#f4ed24] hover:bg-[#00bcf0] text-[#303539] rounded transition z-20 
-                                    ${list ? 'mr-4 py-1 px-2 order-0' : 'py-2 px-4 w-auto'}`}>
-                              Read
+                          <div className="flex items-center justify-between mb-2">
+                            <button onClick={() => openComicFromDrive(file.id, file.name)} className={`bg-[#f4ed24] hover:bg-[#00bcf0] text-[#303539] rounded transition z-20 ${list ? 'mr-4 py-1 px-2 order-0' : 'py-2 px-4 w-auto'}`}>
+                              {fileProgress && fileProgress.page > 1 ? 'Continue' : 'Read'}
                             </button>
-                            <button dangerouslySetInnerHTML={{__html:saveIcon}} className={`h-12 w-auto ${list ? 'mr-8' : ''} ${!saved ? '[&_path]:fill-[#c8412d]' : '[&_path]:fill-[#eeeeee]'}`} onClick={() => toggleSaved(info.edicao)}></button>
+
+                            <button className={`h-12 w-auto ${list ? 'mr-8' : ''} ${saved[file.name] ? '[&_path]:fill-[#c8412d]' : '[&_path]:fill-[#eeeeee]'}`} 
+                                    onClick={() => toggleSaved(info.edicao)}>
+                              <SaveIcon />
+                            </button>
                           </div>
+
+                          {fileProgress && (
+                            <progress value={fileProgress.page / fileProgress.total} max="1"
+                                      className="w-full [&::-webkit-progress-value]:bg-white [&::-moz-progress-bar]:bg-white after:border-white relative h-[1px] [WebkitAppearance:none] [appearance:none]"
+                            ></progress>
+                          )}
                         </div>
-                        
-                    </li>
+                      </li>
                     );
                   })}
+
                 </ul>
               ) : (
                 <p className="text-center">Issue not found.</p>
@@ -213,7 +235,7 @@ export default function App() {
             </>
           )}
         </>
-      {currentFile && <ComicReader file={currentFile} overlay={overlay} setOverlay={setOverlay} setComic={setComic}/>}
+      {currentFile && <ComicReader file={currentFile} overlay={overlay} setOverlay={setOverlay} setComic={setComic} updateProgress={updateReadingProgress}/>}
       {comic && <ComicBook file={infos} setComic={setComic} openComicFromDrive={openComicFromDrive}/>}
 
       <footer className="flex justify-center gap-4 text-xs text-gray-300 pt-32 pb-12">
