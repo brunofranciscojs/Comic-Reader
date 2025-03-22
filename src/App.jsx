@@ -192,17 +192,25 @@ export default function App() {
           <button onClick={() => setList(prv => !prv)}>{list ? <ColumnIcon /> : <ListIcon />}</button>
           <button className="h-12 w-auto left-2" onClick={() => setOpenFav(prv => !prv)}><SaveIcon/></button>
 
-          {openFav && <div className="bg-gray-800 absolute top-16 right-12 w-auto max-h-64 overflow-y-auto rounded-xl shadow-2xl p-7 text-sm flex flex-col gap-2 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-700 [&::-webkit-scrollbar-thumb]:bg-gray-800">
+          {openFav && <div className="bg-gray-800 absolute top-16 right-12 w-auto max-h-64 overflow-y-auto rounded-xl shadow-2xl p-7 text-sm flex flex-col gap-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-gray-700 [&::-webkit-scrollbar-thumb]:bg-[#f4ed24]">
 
-              {Object.values(saved).map((file) => (
-                 <div className="flex gap-2 items-center">
+              {Object.values(saved).map((file,index) => (
+                 <div className="flex gap-2 items-center" key={index}>
 
                   <button className={`bg-[#f4ed24] hover:bg-[#00bcf0] text-[#303539] rounded transition z-20 py-0.5 px-2 w-auto`}
                           onClick={() => openComicFromDrive(file.id, file.fileName)} >
                     Read
                   </button>
 
-                  <span className="truncate">{file.fileName.split('(')[0].replace(' 0', ' #0')}</span>
+                  <span className="truncate">{
+                              file.fileName
+                                .replace(/\(.*\)/, '')
+                                .replace(/\b00(\d)\b/, '#0$1') 
+                                .replace(/\b0(\d{2})\b/, '#$1')
+                                .replace(/\b(\d{3})\b/, '#$1')
+                                .replace('.cbz','')
+                          }
+                  </span>
                 </div>
               ))}
           </div>}
@@ -232,7 +240,7 @@ export default function App() {
                       <li key={file.id} style={{"--bg": `url(/../assets/${info.edicao < 100 ? parseInt(info.edicao, 10) : info.edicao}.jpg)`, backgroundSize: '100%',filter: `opacity(${getOpacity(index)}) saturate(${getOpacity(index + 5)})`, }}
                           onMouseEnter={() => { setHoverIndex(index); setInfos({ fileName: file.name, id: file.id, description: file.description }) }}
                           onMouseLeave={() => setHoverIndex(null)}
-                          className={`!bg-center rounded-md relative hover:!bg-[length:110%] hover:!grayscale-0 duration-700 transition-all grow lg:grow-0 cursor-pointer after:duration-200 after:content-[""] after:absolute 
+                          className={`!bg-center rounded-md relative hover:!bg-[length:110%] hover:!grayscale-0 duration-300 transition-all grow lg:grow-0 cursor-pointer after:duration-200 after:content-[""] after:absolute 
                                     ${list ? 'h-auto w-full' : 'bg-gray-700 h-96 aspect-[.65/1] overflow-hidden [background:var(--bg)]'}
                                     ${list ? 'hover:after:opacity-100 after:opacity-0 after:!bg-center after:!bg-contain after:[background:--bg] after:h-0 after:-top-20 after:w-56 hover:after:h-80 after:right-0 after:rounded-xl after:z-40' :
                                     'after:opacity-75 after:bottom-0 after:w-full after:bg-[linear-gradient(to_top,black_0%,transparent_100%)] after:h-full'}`}>

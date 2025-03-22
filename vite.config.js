@@ -38,5 +38,7 @@ export default defineConfig({
   ],
   optimizeDeps: {
     exclude: ['lucide-react'],
+    exclude: ['js-big-decimal'],
+    include: ['fast-average-color'],
   },
 });
