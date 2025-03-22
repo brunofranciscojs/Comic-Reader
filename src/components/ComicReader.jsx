@@ -51,7 +51,7 @@ export default function ComicReader({ file, setOverlay, overlay, setComic, updat
             {file.images.map((image, index) => (
               <SplideSlide key={index}>
                 <img src={image.url} className="max-w-full object-contain w-full rounded shadow-lg h-full [scale:.9] translate-y-8"/>
-                <span className="text-gray-300 absolute top-[1.6rem] left-[18rem] z-20" onClick={() => updateProgress((index + 1) / 10)}>p. {index + 1}</span>
+                <span className="text-gray-300 absolute top-[1.6rem] left-[18rem] z-20">p. {index + 1}</span>
               </SplideSlide>
             ))}
           </Splide>) : (

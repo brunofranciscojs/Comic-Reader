@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react"
 import {FastAverageColor} from "fast-average-color";
+import SaveIcon from "./saveIcon";
 
-export default function ComicBook({file, setComic, openComicFromDrive}){
+export default function ComicBook({file, setComic, openComicFromDrive, toggleSaved, saved}){
       const [bg, setBg] = useState(null)
       const [bgColor, setBgColor] = useState("#000");
-      
+
       useEffect(() => {    
         const bgFile = file.fileName.split('(')[0].split('e ')[1] < 100 ? parseInt(file.fileName.split('(')[0].split('e ')[1], 10) : file.fileName.split('(')[0].split('e ')[1].trim()
         setBg(bgFile)
@@ -52,9 +53,17 @@ export default function ComicBook({file, setComic, openComicFromDrive}){
             <h3 className="lg:text-3xl text-xl"><span className="font-['impact'] text-[#f4ed24]">Year:</span> {info.year}</h3> <br />
             <span className="text-gray-200 lg:text-2xl text-base block my-4 max-w-[85%]">{info.description}</span>
             
-            <button onClick={() => openComicFromDrive(file.id, file.fileName)} className="mt-2 bg-[#f4ed24] hover:bg-[#00bcf0] text-[#303539] py-2 px-4 rounded transition z-20">
-                Read
-            </button>
+            <div className="flex items-center gap-3">
+              <button onClick={() => openComicFromDrive(file.id, file.fileName)} className="mt-2 bg-[#f4ed24] hover:bg-[#00bcf0] text-[#303539] py-2 px-4 rounded transition z-20">
+                  Read
+              </button>
+  
+              <button className={`[scale:1.4] h-4 w-auto ${saved[file.id] ? '[&_path]:fill-[#f4ed24]' : '[&_path]:fill-none [&_path]:stroke-[#f4ed24]'}`} 
+                      onClick={() => toggleSaved(file.id, file.fileName)}>
+                <SaveIcon />
+              </button>
+            </div>
+
         </div>
         <img src={`/assets/${bg}.jpg`} className="object-contain w-auto lg:h-[90%] h-[65%] self-center z-10 relative rounded-lg"/>
     </div>

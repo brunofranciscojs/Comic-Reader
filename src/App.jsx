@@ -18,11 +18,16 @@ export default function App() {
   const [overlay, setOverlay] = useState(false)
   const [list, setList] = useState(false)
   const [busca, setBusca] = useState("");
-  const [saved, setSaved] = useState({});
   const [hoverIndex, setHoverIndex] = useState(null);
   const [comic, setComic] = useState(false);
   const [infos, setInfos] = useState(null);
   const [readProgress, setReadProgress] = useState({});
+  const [openFav, setOpenFav] = useState(false)
+
+  const [saved, setSaved] = useState(() => {
+    const favorited = localStorage.getItem("favorites");
+    return favorited ? JSON.parse(favorited) : {};
+  });
 
   const url = `https://www.googleapis.com/drive/v3/files?q='${folderId}' in parents&fields=files(id, name, description)&key=${apiKey}`;
   
@@ -82,6 +87,7 @@ export default function App() {
     if (storedProgress) {
       setReadProgress(JSON.parse(storedProgress));
     }
+
   }, []);
 
 
@@ -155,19 +161,52 @@ export default function App() {
     return edicaoA - edicaoB;
   });
 
-  const toggleSaved = (id) => { setSaved(prevSaved => ({ ...prevSaved, [id]: !prevSaved[id]  })); };
+  const toggleSaved = (id, fileName) => {
+    setSaved((prevSaved) => {
+      let updatedSaved = { ...prevSaved };
+  
+      if (updatedSaved[id]) {
+        delete updatedSaved[id];
+      } else {
+        updatedSaved[id] = { id, fileName };
+      }
+  
+      localStorage.setItem("favorites", JSON.stringify(updatedSaved));
+      return updatedSaved;
+    });
+  };
+
   const eraseSearch = (e) => { setBusca(''); e.target.nextElementSibling.value = '' }
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      <div className="flex justify-between items-center py-4 px-12 flex-wrap mb-12 gap-5">
+
+      <div className="flex justify-between items-center py-4 px-12 flex-wrap mb-12 gap-5 fixed top-0 left-0 w-full z-50 backdrop-blur-md bg-gray-950/45">
         <img src="/assets/logo.webp" width={120} />
         <div className="relative w-full lg:min-w-[unset] grow lg:order-[unset] order-3 lg:grow-0 lg:w-1/2">
           {busca.length > 0 && <button className="bg-white/20 text-white text-sm rounded-full w-5 h-5 absolute top-2 right-4 border-0 z-10 leading-[0]" onClick={eraseSearch}>x</button>}
-          <input type="text" placeholder="Seek by issue..." onInput={(e) => setBusca(e.target.value)} className="w-full px-5 p-2 text-gray-300  bg-white/10 rounded-xl" />
+          <input type="text" placeholder="Seek by issue..." onInput={(e) => setBusca(e.target.value)} className="w-full px-5 p-2 text-gray-300  bg-white/10 rounded-xl  outline-none" />
         </div>
-        <button className="h-12 w-auto left-2"><SaveIcon/></button>
-        <button onClick={() => setList(prv => !prv)}>{list ? <ColumnIcon /> : <ListIcon />}</button>
+        
+        <div className="flex gap-3">
+          <button onClick={() => setList(prv => !prv)}>{list ? <ColumnIcon /> : <ListIcon />}</button>
+          <button className="h-12 w-auto left-2" onClick={() => setOpenFav(prv => !prv)}><SaveIcon/></button>
+
+          {openFav && <div className="bg-gray-800 absolute top-16 right-12 w-auto max-h-64 overflow-y-auto rounded-xl shadow-2xl p-7 text-sm flex flex-col gap-2 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-gray-700 [&::-webkit-scrollbar-thumb]:bg-gray-800">
+
+              {Object.values(saved).map((file) => (
+                 <div className="flex gap-2 items-center">
+
+                  <button className={`bg-[#f4ed24] hover:bg-[#00bcf0] text-[#303539] rounded transition z-20 py-0.5 px-2 w-auto`}
+                          onClick={() => openComicFromDrive(file.id, file.fileName)} >
+                    Read
+                  </button>
+
+                  <span className="truncate">{file.fileName.split('(')[0].replace(' 0', ' #0')}</span>
+                </div>
+              ))}
+          </div>}
+        </div>
       </div>
 
       {loading && <div className="text-center">reading folder...</div>}
@@ -178,7 +217,7 @@ export default function App() {
             <>
               {arquivosFiltrados.length > 0 ? (
 
-                <ul className={`flex ${list ? 
+                <ul className={`flex py-36 ${list ? 
                                'flex-col gap-3 px-8 ' : 
                                'px-8 lg:px-4 gap-x-1 gap-y-7  '} 
                                 flex-wrap items-center ${busca.length > 1 ? 'justify-start' : 'justify-around'} ${comic ? 'pointer-events-none' : ''}`}>
@@ -191,7 +230,7 @@ export default function App() {
 
                     return (
                       <li key={file.id} style={{"--bg": `url(/../assets/${info.edicao < 100 ? parseInt(info.edicao, 10) : info.edicao}.jpg)`, backgroundSize: '100%',filter: `opacity(${getOpacity(index)}) saturate(${getOpacity(index + 5)})`, }}
-                          onMouseEnter={() => { setHoverIndex(index);setInfos({ fileName: file.name, id: file.id, description: file.description }) }}
+                          onMouseEnter={() => { setHoverIndex(index); setInfos({ fileName: file.name, id: file.id, description: file.description }) }}
                           onMouseLeave={() => setHoverIndex(null)}
                           className={`!bg-center rounded-md relative hover:!bg-[length:110%] hover:!grayscale-0 duration-700 transition-all grow lg:grow-0 cursor-pointer after:duration-200 after:content-[""] after:absolute 
                                     ${list ? 'h-auto w-full' : 'bg-gray-700 h-96 aspect-[.65/1] overflow-hidden [background:var(--bg)]'}
@@ -212,8 +251,8 @@ export default function App() {
                               {fileProgress && fileProgress.page > 1 ? 'Continue' : 'Read'}
                             </button>
 
-                            <button className={`h-12 w-auto ${list ? 'mr-8' : ''} ${saved[file.name] ? '[&_path]:fill-[#c8412d]' : '[&_path]:fill-[#eeeeee]'}`} 
-                                    onClick={() => toggleSaved(info.edicao)}>
+                            <button className={`h-12 w-auto ${list ? 'mr-8' : ''} ${saved[file.id] ? '[&_path]:fill-[#f4ed24]' : '[&_path]:fill-none [&_path]:stroke-[#f4ed24]'}`} 
+                                    onClick={() => toggleSaved(file.id, file.name)}>
                               <SaveIcon />
                             </button>
                           </div>
@@ -236,7 +275,7 @@ export default function App() {
           )}
         </>
       {currentFile && <ComicReader file={currentFile} overlay={overlay} setOverlay={setOverlay} setComic={setComic} updateProgress={updateReadingProgress}/>}
-      {comic && <ComicBook file={infos} setComic={setComic} openComicFromDrive={openComicFromDrive}/>}
+      {comic && <ComicBook file={infos} setComic={setComic} openComicFromDrive={openComicFromDrive} toggleSaved={toggleSaved} saved={saved}/>}
 
       <footer className="flex justify-center gap-4 text-xs text-gray-300 pt-32 pb-12">
         <a href="https://github.com/brunofranciscojs/Comic-Reader" target="_blank">see on github</a>
