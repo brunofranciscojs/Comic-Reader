@@ -218,9 +218,9 @@ export default function App() {
                             </button>
                           </div>
 
-                          {fileProgress && (
+                          {!list && fileProgress && (
                             <progress value={fileProgress.page / fileProgress.total} max="1"
-                                      className="w-full [&::-webkit-progress-value]:bg-white [&::-moz-progress-bar]:bg-white after:border-white relative h-[1px] [WebkitAppearance:none] [appearance:none]"
+                                      className={`w-full ${fileProgress.page === fileProgress.total ? '[&::-webkit-progress-value]:bg-[#00bcf0] [&::-moz-progress-bar]:bg-[#00bcf0]' : '[&::-webkit-progress-value]:bg-white [&::-moz-progress-bar]:bg-white' } after:border-white relative h-[1px] [WebkitAppearance:none] [appearance:none]`}
                             ></progress>
                           )}
                         </div>
