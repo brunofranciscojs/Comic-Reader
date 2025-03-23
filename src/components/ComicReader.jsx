@@ -27,6 +27,8 @@ export default function ComicReader({ file, setOverlay, overlay, setComic, updat
     setOverlay(false);
     setBg(null);
     setComic(false);
+    document.body.style.overflow = 'visible'
+    document.body.style.cssText = ''
   }
 
   const handleSlideChange = async (splide) => {
