@@ -201,15 +201,22 @@ export default function App() {
           {openFav && <div className="bg-gray-800 absolute top-16 right-12 w-auto max-h-64 overflow-y-auto rounded-xl shadow-2xl p-7 text-sm flex flex-col gap-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-gray-700 [&::-webkit-scrollbar-thumb]:bg-[#f4ed24]">
 
               {Object.values(saved).map((file,index) => (
-                 <div className="flex gap-2 items-center" key={index}>
+                
+                 <div className="flex flex-col gap-1">
+                    {readProgress[file.fileName] && (
+                      <progress value={readProgress[file.fileName].page / readProgress[file.fileName].total} max="1"
+                                className={`w-36 ${readProgress[file.fileName].page === readProgress[file.fileName].total ? '[&::-webkit-progress-value]:bg-[#00bcf0] [&::-moz-progress-bar]:bg-[#00bcf0]' : '[&::-webkit-progress-value]:bg-white [&::-moz-progress-bar]:bg-white' } after:border-white relative h-[1px] [WebkitAppearance:none] [appearance:none]`}
+                      ></progress>
+                    )}
 
-                  <button className={`bg-[#f4ed24] hover:bg-[#00bcf0] text-[#303539] rounded transition z-20 py-0.5 px-2 w-auto`}
-                          onClick={() => openComicFromDrive(file.id, file.fileName)} >
-                    Read
-                  </button>
-
-                  <span className="truncate">{getComicName(file.fileName)}</span>
-                </div>
+                   <div className="flex gap-2 items-center" key={index}>
+                    <button className={`bg-[#f4ed24] hover:bg-[#00bcf0] text-[#303539] rounded transition z-20 py-0.5 px-2 w-auto`}
+                            onClick={() => openComicFromDrive(file.id, file.fileName)} >
+                      Read
+                    </button>
+                    <span className="truncate">{getComicName(file.fileName)}</span>
+                  </div>
+                 </div>
               ))}
           </div>}
         </div>
@@ -279,8 +286,8 @@ export default function App() {
             </>
           )}
         </>
-      {currentFile && <ComicReader file={currentFile} overlay={overlay} setOverlay={setOverlay} setComic={setComic} updateProgress={updateReadingProgress}/>}
-      {comic && <ComicBook file={infos} setComic={setComic} openComicFromDrive={openComicFromDrive} toggleSaved={toggleSaved} saved={saved} color={color}/>}
+      {currentFile && <ComicReader file={currentFile} overlay={overlay} setOverlay={setOverlay} setComic={setComic} updateProgress={updateReadingProgress} readProgress={readProgress} />}
+      {comic && <ComicBook file={infos} setComic={setComic} openComicFromDrive={openComicFromDrive} toggleSaved={toggleSaved} saved={saved} color={color} />}
 
       <footer className="flex justify-center gap-4 text-xs text-gray-300 pt-32 pb-12">
         <a href="https://github.com/brunofranciscojs/Comic-Reader" target="_blank">see on github</a>

@@ -4,7 +4,7 @@ import '@splidejs/react-splide/css';
 import LoadingIcon from "./loadingIcon";
 import ImageZoom from 'react-image-zooom'
 
-export default function ComicReader({ file, setOverlay, overlay, setComic, updateProgress }) {
+export default function ComicReader({ file, setOverlay, overlay, setComic, updateProgress, readProgress }) {
   const [slider, setSlider] = useState(false);
   const [bg, setBg] = useState(null);
   const [startPage, setStartPage] = useState(0);
@@ -40,20 +40,26 @@ export default function ComicReader({ file, setOverlay, overlay, setComic, updat
   if (!file || !file.images) {
     return <p>no file.</p>;
   }
-  
+  const fileProgress = readProgress[file.fileName];
+
   return (
      (overlay &&
       <div className="fixed backdrop-blur-md top-0 left-0 w-full h-dvh flex justify-center items-center [background:var(--bg)_#000d] bg-blend-multiply !bg-center !bg-[length:200px] z-[9999]" style={{"--bg":`url(/../assets/${bg}.jpg)`}}>
+        {fileProgress && (
+            <progress value={fileProgress.page / fileProgress.total} max="1"
+                      className={`!absolute top-0 w-full left-0 ${fileProgress.page === fileProgress.total ? '[&::-webkit-progress-value]:bg-[#00bcf0] [&::-moz-progress-bar]:bg-[#00bcf0]' : '[&::-webkit-progress-value]:bg-white [&::-moz-progress-bar]:bg-white' } after:border-white relative h-[1px] [WebkitAppearance:none] [appearance:none]`}
+            ></progress>
+          )}
         <button className="bg-black text-white rounded-full w-5 h-5 absolute top-4 right-4 z-10" onClick={closeSlider}>X</button>
 
-        <div className="flex justify-start absolute left-1/2 -translate-x-1/2 top-0 w-full px-12 py-5 z-[2] gap-5">
-         <img src="/assets/logo.webp" width={120} />
-         <span className="text-[#f4ed24] text-3xl font-['impact']">
-          #{file.fileName.split('Invincible')[1].split('(')[0] < 100 ? 
-            parseInt(file.fileName.split('Invincible')[1].split('(')[0], 10) : 
-            file.fileName.split('Invincible')[1].split('(')[0] 
-            }
-          </span>
+        <div className="flex justify-start gap-6 absolute left-1/2 -translate-x-1/2 top-0 w-full px-12 py-5 z-[2]">
+            <img src="/assets/logo.webp" width={120} />
+            <span className="text-[#f4ed24] text-3xl font-['impact']">
+              ISSUE: #{file.fileName.split('Invincible')[1].split('(')[0] < 100 ? 
+                parseInt(file.fileName.split('Invincible')[1].split('(')[0], 10) : 
+                file.fileName.split('Invincible')[1].split('(')[0] 
+                }
+            </span>
         </div>
 
           {slider ? (<Splide options={{ perPage: 1, arrows: true, pagination:false, start: startPage, wheel: true, direction:'ttb', height:'100%' }} onMove={handleSlideChange} className="[&>#splide01-track]:h-dvh flex h-dvh z-[4]">

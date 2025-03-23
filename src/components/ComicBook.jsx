@@ -14,7 +14,7 @@ export default function ComicBook({file, setComic, openComicFromDrive, toggleSav
         const regex = /^(.*?)\s(\d{3})\s\((\d{4})\)\s?(.*)?$/;
         const match = title.match(regex);
       
-        if (!match) return { title: "Desconhecido", issue: "?", year: "?" };
+        if (!match) return { title: "unknown", issue: "?", year: "?" };
       
         return {
           title: match[1],
@@ -33,7 +33,7 @@ export default function ComicBook({file, setComic, openComicFromDrive, toggleSav
       return(
          
      <div style={{"--bg": color}} className="[border:2px_solid_var(--bg)] flex overflow-hidden lg:justify-between justify-start flex-col lg:flex-row gap-8 lg:p-12 p-8 after:content-[''] after:absolute after:left-0 after:top-0 after:w-full after:h-full after:[background:--bg] after:saturate-200 after:brightness-50 after:backdrop-blur-2xl after:z-0 fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[90dvh] lg:max-w-[80%] max-w-[90%] w-full rounded-2xl z-[999]">
-        <button className="text-white absolute top-2 right-4 z-10" onClick={() => setComic(false)}>X</button>
+        <button className="text-white absolute top-2 right-4 z-10" onClick={() => { setComic(false); document.body.style.overflow = 'visible'; document.body.style.cssText = ''}}>X</button>
         <div className="z-10 relative">
             <h3 className="lg:text-3xl text-xl"><span className="font-['impact'] text-[#f4ed24]">Comic:</span> {info.title}</h3>
             <h3 className="lg:text-3xl text-xl"><span className="font-['impact'] text-[#f4ed24]">Issue:</span> {info.issue < 100 ? parseInt(info.issue,10) : info.issue}</h3>
