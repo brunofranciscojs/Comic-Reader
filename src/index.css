@@ -7,11 +7,8 @@
 }
 
 ol{
-    li{
-        @apply before:content-[''] before:block before:absolute before:w-0 before:h-full before:left-0 [&:hover:before]:animate-[shine_0.4s_forwards] sm:[&:hover:before]:mix-blend-plus-lighter
-        before:top-0 before:z-50 before:opacity-0 before:-skew-x-[35deg] before:saturate-[3] 
-        before:[box-shadow:0_0_25px_10px_currentColor] md:before:[box-shadow:0_0_25px_10px_currentColor]
-    }
+  @apply [&:has(li:not(:hover))_li:hover]:brightness-100 [&:has(li:hover)_li]:brightness-50;
+ 
 }
 
 @keyframes shine {

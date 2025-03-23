@@ -4,20 +4,26 @@ import '@splidejs/react-splide/css';
 import LoadingIcon from "./loadingIcon";
 import ImageZoom from 'react-image-zooom'
 
-export default function ComicReader({ file, setOverlay, overlay, setComic, updateProgress, readProgress }) {
+export default function ComicReader({ file, setOverlay, overlay, setComic, updateProgress, readProgress, extractIssueNumber }) {
   const [slider, setSlider] = useState(false);
   const [bg, setBg] = useState(null);
   const [startPage, setStartPage] = useState(0);
 
   useEffect(() => {
-    setBg(file.fileName.split('(')[0].split('e ')[1] < 100 ? parseInt(file.fileName.split('(')[0].split('e ')[1], 10) : file.fileName.split('(')[0].split('e ')[1].trim())
-
-    if (file && file.images.length > 0) {
-      setSlider(true);
+    if (file && file.fileName) {
+      setBg(extractIssueNumber(file.fileName))
   
-      const savedProgress = localStorage.getItem(`progress-${file.fileName}`);
-      if (savedProgress) {
-        setStartPage(parseInt(savedProgress, 10) - 1);
+      if (file.images.length > 0) {
+        setSlider(true);
+  
+        const savedProgress = localStorage.getItem(`progress-${file.fileName}`) || 1;
+        console.log("Loading progress for:", file.fileName, "Saved progress:", savedProgress);
+  
+        if (savedProgress) {
+          setStartPage(parseInt(savedProgress, 10) - 1);
+        } else {
+          setStartPage(0); 
+        }
       }
     }
   }, [file]); 
@@ -36,11 +42,11 @@ export default function ComicReader({ file, setOverlay, overlay, setComic, updat
     updateProgress(file.fileName, currentIndex, file.images.length);
     localStorage.setItem(`progress-${file.fileName}`, currentIndex);
   };
+  const fileProgress = readProgress[file.fileName];
 
   if (!file || !file.images) {
     return <p>no file.</p>;
   }
-  const fileProgress = readProgress[file.fileName];
 
   return (
      (overlay &&

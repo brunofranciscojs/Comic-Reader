@@ -230,7 +230,7 @@ export default function App() {
             <>
               {arquivosFiltrados.length > 0 ? (
 
-                <ol className={`flex py-36 ${list ? 'flex-col gap-3 px-8 ' : 'px-8 lg:px-4 gap-x-1 gap-y-7'} [&:has(li:not(:hover))_li:hover]:opacity-100 [&:has(li:hover)_li]:opacity-50
+                <ol className={`flex py-36 ${list ? 'flex-col gap-3 px-8 ' : 'px-8 lg:px-4 gap-x-1 gap-y-7'}
                                 flex-wrap items-center ${busca.length > 1 ? 'justify-start' : 'justify-around'} ${comic ? 'pointer-events-none brightness-[.2]' : ''}`}>
 
                   <li className="absolute pointer-events-none"></li>
@@ -240,9 +240,9 @@ export default function App() {
                     const fileProgress = readProgress[file.name];
 
                     return (
-                      <li key={file.id} style={{"--bg": `url(/../assets/${info.edicao < 100 ? parseInt(info.edicao, 10) : info.edicao}.jpg)`, backgroundSize: '100%', color:colors[file.id] || "#fff" }}
+                      <li key={file.id} style={{"--bg": `url(/../assets/${info.edicao < 100 ? parseInt(info.edicao, 10) : info.edicao}.jpg)`, backgroundSize: '100%', color:colors[file.id] || "#fff", "--cor":colors[file.id] }}
                           onMouseEnter={() => { setInfos({ fileName: file.name, id: file.id, description: file.description }); setColor(colors[file.id]) }}
-                          className={`!bg-center rounded-md relative hover:!grayscale-0 duration-300 transition-all grow lg:grow-0 cursor-pointer after:duration-200 after:content-[""] after:absolute 
+                          className={`hover:outline-[--cor] shadow-[0_0_12rem_transparent] hover:shadow-[--cor] outline outline-1 outline-transparent hover:[scale:1.01] !bg-center rounded-md relative hover:!grayscale-0 duration-300 transition-all grow lg:grow-0 cursor-pointer after:duration-200 after:content-[""] after:absolute 
                                     ${list ? 'h-auto w-full' : 'bg-gray-700 h-96 aspect-[.65/1] overflow-hidden [background:var(--bg)]'}
                                     ${list ? 'hover:after:opacity-100 after:opacity-0 after:!bg-center after:!bg-contain after:[background:--bg] after:h-0 after:-top-20 after:w-56 hover:after:h-80 after:right-0 after:rounded-xl after:z-40' :
                                     'after:opacity-75 after:bottom-0 after:w-full after:bg-[linear-gradient(to_top,black_0%,transparent_100%)] after:h-full'}`}>
@@ -250,14 +250,10 @@ export default function App() {
                         <div className={`relative flex z-20  ${list ? 'flex-row z-20 py-0 px-3 items-center' : 'p-4 flex-col justify-end h-full'}`}>
 
                           <div className="absolute top-0 left-0 w-full h-[85%] z-50" onClick={() => setComic(true)}></div>
-                          <h3 className={`${list ? 'text-sm order-1' : 'text-lg'} font-semibold text-white`}>
-                            {list ? 
-                              file.name : 
-                              (getComicName(file.name))}
-                          </h3>
+                          <span className={`${list ? 'text-sm order-1' : 'text-xs'} text-white`}>
+                            {list ? file.name : `#${info.edicao} - (${info.ano})`}
+                          </span>
                           
-                          <span className={`text-[#f4ed24] bg-[#303539] absolute top-0 right-3 text-lg px-[.6rem] py-[.2rem] font-bold ${list ? 'hidden' : ''}`}>{info.ano}</span>
-
                           <div className="flex items-center justify-between mb-2">
                             <button onClick={() => openComicFromDrive(file.id, file.name)} className={`bg-[#f4ed24] hover:bg-[#00bcf0] text-[#303539] rounded transition z-20 ${list ? 'mr-4 py-1 px-2 order-0' : 'py-2 px-4 w-auto'}`}>
                               {fileProgress && fileProgress.page > 1 ? 'Continue' : 'Read'}
@@ -286,7 +282,7 @@ export default function App() {
             </>
           )}
         </>
-      {currentFile && <ComicReader file={currentFile} overlay={overlay} setOverlay={setOverlay} setComic={setComic} updateProgress={updateReadingProgress} readProgress={readProgress} />}
+      {currentFile && <ComicReader file={currentFile} overlay={overlay} setOverlay={setOverlay} setComic={setComic} updateProgress={updateReadingProgress} readProgress={readProgress} extractIssueNumber={extractIssueNumber}/>}
       {comic && <ComicBook file={infos} setComic={setComic} openComicFromDrive={openComicFromDrive} toggleSaved={toggleSaved} saved={saved} color={color} />}
 
       <footer className="flex justify-center gap-4 text-xs text-gray-300 pt-32 pb-12">
