@@ -5,7 +5,8 @@ import ComicBook from './components/ComicBook'
 import ListIcon from "./components/listIcon";
 import ColumnIcon from "./components/columnIcon";
 import SaveIcon from "./components/saveIcon";
-import LoadingIcon from "./components/loadingIcon";
+import { FastAverageColor } from "fast-average-color";
+
 
 const apiKey = import.meta.env.VITE_API_KEY;
 const folderId = import.meta.env.VITE_FOLDER_ID;
@@ -18,39 +19,22 @@ export default function App() {
   const [overlay, setOverlay] = useState(false)
   const [list, setList] = useState(false)
   const [busca, setBusca] = useState("");
-  const [hoverIndex, setHoverIndex] = useState(null);
   const [comic, setComic] = useState(false);
   const [infos, setInfos] = useState(null);
   const [readProgress, setReadProgress] = useState({});
   const [openFav, setOpenFav] = useState(false)
+  const [colors, setColors] = useState({})
+  const [color, setColor] = useState('');
 
   const [saved, setSaved] = useState(() => {
     const favorited = localStorage.getItem("favorites");
     return favorited ? JSON.parse(favorited) : {};
   });
-
-  const url = `https://www.googleapis.com/drive/v3/files?q='${folderId}' in parents&fields=files(id, name, description)&key=${apiKey}`;
   
-  useEffect(() => {
-    fetch(url)
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Failed to fetch file list.");
-        }
-        return response.json();
-      })
-      .then((data) => setFiles(data.files || []))
-      .finally(() => setLoading(false));
-
-  }, []);
-
-  const getOpacity = (index) => {
-    if (hoverIndex === null) return 1; 
-    const diff = Math.abs(hoverIndex - index);
-    if (diff === 0) return 1; 
-    if (diff <= 4) return (1 - diff * 0.2).toFixed(2);
-    return 0.1;
-  };
+  const extractIssueNumber = (file) => {
+    const match = file.match(/\s0*(\d+)\s/);
+    return match ? parseInt(match[1], 10) : 'nocover';
+  }
 
   useEffect(() => {
     const fetchAllFiles = async () => {
@@ -74,6 +58,7 @@ export default function App() {
         } while (nextPageToken);
 
         setFiles(allFiles);
+        
       } catch (err) {
         setError(err.message);
       } finally {
@@ -90,6 +75,28 @@ export default function App() {
 
   }, []);
 
+    useEffect(() => {
+      if (files.length > 0) {
+          const fac = new FastAverageColor();
+
+          files.forEach((file) => {
+              const bg = extractIssueNumber(file.name);
+              const img = new Image();
+              img.src = `/assets/${bg}.jpg`;
+              img.crossOrigin = "anonymous";
+              img.onload = () => {
+                  fac.getColorAsync(img)
+                      .then((color) => {
+                          setColors(prevColors => ({
+                              ...prevColors,
+                              [file.id]: color.hex
+                          }));
+                      })
+                      .catch((err) => console.error("Erro ao obter cor:", err));
+              };
+          });
+      }
+    }, [files]);
 
   const openComicFromDrive = (fileId, fileName) => {
     if (!fileName.toLowerCase().endsWith(".cbz")) {
@@ -148,12 +155,10 @@ export default function App() {
     };
   }
 
+
   const arquivosFiltrados = files.filter((buscaItem) => {
     const { edicao } = extractInfoFromTitle(buscaItem.name);
-    return (
-      buscaItem.name.toLowerCase().includes(busca.toLowerCase()) ||
-      edicao.includes(busca)
-    );
+    return ( buscaItem.name.toLowerCase().includes(busca.toLowerCase()) || edicao.includes(busca))
   })
   .sort((a, b) => {
     const edicaoA = parseInt(extractInfoFromTitle(a.name).edicao, 10) || 0;
@@ -177,6 +182,7 @@ export default function App() {
   };
 
   const eraseSearch = (e) => { setBusca(''); e.target.nextElementSibling.value = '' }
+  const getComicName = (string) => string.replace(/\(.*\)/, '').replace(/\b00(\d)\b/, '#0$1') .replace(/\b0(\d{2})\b/, '#$1').replace(/\b(\d{3})\b/, '#$1').replace('.cbz','')
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
@@ -202,15 +208,7 @@ export default function App() {
                     Read
                   </button>
 
-                  <span className="truncate">{
-                              file.fileName
-                                .replace(/\(.*\)/, '')
-                                .replace(/\b00(\d)\b/, '#0$1') 
-                                .replace(/\b0(\d{2})\b/, '#$1')
-                                .replace(/\b(\d{3})\b/, '#$1')
-                                .replace('.cbz','')
-                          }
-                  </span>
+                  <span className="truncate">{getComicName(file.fileName)}</span>
                 </div>
               ))}
           </div>}
@@ -225,10 +223,8 @@ export default function App() {
             <>
               {arquivosFiltrados.length > 0 ? (
 
-                <ul className={`flex py-36 ${list ? 
-                               'flex-col gap-3 px-8 ' : 
-                               'px-8 lg:px-4 gap-x-1 gap-y-7  '} 
-                                flex-wrap items-center ${busca.length > 1 ? 'justify-start' : 'justify-around'} ${comic ? 'pointer-events-none' : ''}`}>
+                <ol className={`flex py-36 ${list ? 'flex-col gap-3 px-8 ' : 'px-8 lg:px-4 gap-x-1 gap-y-7'} [&:has(li:not(:hover))_li:hover]:opacity-100 [&:has(li:hover)_li]:opacity-50
+                                flex-wrap items-center ${busca.length > 1 ? 'justify-start' : 'justify-around'} ${comic ? 'pointer-events-none brightness-[.2]' : ''}`}>
 
                   <li className="absolute pointer-events-none"></li>
 
@@ -237,10 +233,9 @@ export default function App() {
                     const fileProgress = readProgress[file.name];
 
                     return (
-                      <li key={file.id} style={{"--bg": `url(/../assets/${info.edicao < 100 ? parseInt(info.edicao, 10) : info.edicao}.jpg)`, backgroundSize: '100%',filter: `opacity(${getOpacity(index)}) saturate(${getOpacity(index + 5)})`, }}
-                          onMouseEnter={() => { setHoverIndex(index); setInfos({ fileName: file.name, id: file.id, description: file.description }) }}
-                          onMouseLeave={() => setHoverIndex(null)}
-                          className={`!bg-center rounded-md relative hover:!bg-[length:110%] hover:!grayscale-0 duration-300 transition-all grow lg:grow-0 cursor-pointer after:duration-200 after:content-[""] after:absolute 
+                      <li key={file.id} style={{"--bg": `url(/../assets/${info.edicao < 100 ? parseInt(info.edicao, 10) : info.edicao}.jpg)`, backgroundSize: '100%', color:colors[file.id] || "#fff" }}
+                          onMouseEnter={() => { setInfos({ fileName: file.name, id: file.id, description: file.description }); setColor(colors[file.id]) }}
+                          className={`!bg-center rounded-md relative hover:!grayscale-0 duration-300 transition-all grow lg:grow-0 cursor-pointer after:duration-200 after:content-[""] after:absolute 
                                     ${list ? 'h-auto w-full' : 'bg-gray-700 h-96 aspect-[.65/1] overflow-hidden [background:var(--bg)]'}
                                     ${list ? 'hover:after:opacity-100 after:opacity-0 after:!bg-center after:!bg-contain after:[background:--bg] after:h-0 after:-top-20 after:w-56 hover:after:h-80 after:right-0 after:rounded-xl after:z-40' :
                                     'after:opacity-75 after:bottom-0 after:w-full after:bg-[linear-gradient(to_top,black_0%,transparent_100%)] after:h-full'}`}>
@@ -248,8 +243,10 @@ export default function App() {
                         <div className={`relative flex z-20  ${list ? 'flex-row z-20 py-0 px-3 items-center' : 'p-4 flex-col justify-end h-full'}`}>
 
                           <div className="absolute top-0 left-0 w-full h-[85%] z-50" onClick={() => setComic(true)}></div>
-                          <h3 className={`${list ? 'text-sm order-1' : 'text-lg'} font-semibold`}>
-                            {list ? file.name : (info.titulo, <span className="text-gray-200">#{info.edicao}</span>)}
+                          <h3 className={`${list ? 'text-sm order-1' : 'text-lg'} font-semibold text-white`}>
+                            {list ? 
+                              file.name : 
+                              (getComicName(file.name))}
                           </h3>
                           
                           <span className={`text-[#f4ed24] bg-[#303539] absolute top-0 right-3 text-lg px-[.6rem] py-[.2rem] font-bold ${list ? 'hidden' : ''}`}>{info.ano}</span>
@@ -275,7 +272,7 @@ export default function App() {
                     );
                   })}
 
-                </ul>
+                </ol>
               ) : (
                 <p className="text-center">Issue not found.</p>
               )}
@@ -283,7 +280,7 @@ export default function App() {
           )}
         </>
       {currentFile && <ComicReader file={currentFile} overlay={overlay} setOverlay={setOverlay} setComic={setComic} updateProgress={updateReadingProgress}/>}
-      {comic && <ComicBook file={infos} setComic={setComic} openComicFromDrive={openComicFromDrive} toggleSaved={toggleSaved} saved={saved}/>}
+      {comic && <ComicBook file={infos} setComic={setComic} openComicFromDrive={openComicFromDrive} toggleSaved={toggleSaved} saved={saved} color={color}/>}
 
       <footer className="flex justify-center gap-4 text-xs text-gray-300 pt-32 pb-12">
         <a href="https://github.com/brunofranciscojs/Comic-Reader" target="_blank">see on github</a>

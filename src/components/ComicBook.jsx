@@ -1,25 +1,13 @@
 import { useState, useEffect } from "react"
-import {FastAverageColor} from "fast-average-color";
 import SaveIcon from "./saveIcon";
+import ImageZoom from 'react-image-zooom'
 
-export default function ComicBook({file, setComic, openComicFromDrive, toggleSaved, saved}){
+export default function ComicBook({file, setComic, openComicFromDrive, toggleSaved, saved, color}){
       const [bg, setBg] = useState(null)
-      const [bgColor, setBgColor] = useState("#000");
 
-      useEffect(() => {    
+      useEffect(() => {
         const bgFile = file.fileName.split('(')[0].split('e ')[1] < 100 ? parseInt(file.fileName.split('(')[0].split('e ')[1], 10) : file.fileName.split('(')[0].split('e ')[1].trim()
         setBg(bgFile)
-    
-        const fac = new FastAverageColor();
-        const img = new Image();
-        img.src = `/assets/${bgFile}.jpg`;
-        img.crossOrigin = "anonymous";
-    
-        img.onload = () => {
-          fac.getColorAsync(img).then((color) => {
-            setBgColor(color.hex);
-          });
-        };
       }, [file]);
 
       function extractInfoFromTitle(title) {
@@ -42,10 +30,9 @@ export default function ComicBook({file, setComic, openComicFromDrive, toggleSav
       if (!file) {
         return <p>no file.</p>;
       }
-
-    return(
+      return(
          
-     <div style={{"--bg": bgColor+'aa'}} className="shadow-2xl shadow-[--bg] [border:3px_solid_var(--bg)] flex overflow-hidden lg:justify-between justify-start flex-col lg:flex-row gap-8 lg:p-12 p-8 after:content-[''] after:absolute after:left-0 after:top-0 after:w-full after:h-full after:[background:--bg] after:saturate-200 after:brightness-50 after:backdrop-blur-2xl after:z-0 fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[90dvh] lg:max-w-[80%] max-w-[90%] w-full rounded-2xl z-[999]">
+     <div style={{"--bg": color}} className="[border:2px_solid_var(--bg)] flex overflow-hidden lg:justify-between justify-start flex-col lg:flex-row gap-8 lg:p-12 p-8 after:content-[''] after:absolute after:left-0 after:top-0 after:w-full after:h-full after:[background:--bg] after:saturate-200 after:brightness-50 after:backdrop-blur-2xl after:z-0 fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[90dvh] lg:max-w-[80%] max-w-[90%] w-full rounded-2xl z-[999]">
         <button className="text-white absolute top-2 right-4 z-10" onClick={() => setComic(false)}>X</button>
         <div className="z-10 relative">
             <h3 className="lg:text-3xl text-xl"><span className="font-['impact'] text-[#f4ed24]">Comic:</span> {info.title}</h3>
@@ -65,7 +52,7 @@ export default function ComicBook({file, setComic, openComicFromDrive, toggleSav
             </div>
 
         </div>
-        <img src={`/assets/${bg}.jpg`} className="object-contain w-auto lg:h-[90%] h-[65%] self-center z-10 relative rounded-lg"/>
+        <ImageZoom src={`/assets/${bg}.jpg`} className="object-contain w-auto lg:h-[90%] h-[65%] self-center z-10 relative [&>img]:rounded-lg [&>img]:h-full [&>img]:w-[800px] [&>img]:object-contain !bg-transparent" zoom="200"/>
     </div>
         
     )
