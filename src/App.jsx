@@ -30,7 +30,7 @@ export default function App() {
     const favorited = localStorage.getItem("favorites");
     return favorited ? JSON.parse(favorited) : {};
   });
-  
+
   const extractIssueNumber = (file) => {
     const match = file.match(/\s0*(\d+)\s/);
     return match ? parseInt(match[1], 10) : 'nocover';
@@ -58,7 +58,7 @@ export default function App() {
         } while (nextPageToken);
 
         setFiles(allFiles);
-        
+
       } catch (err) {
         setError(err.message);
       } finally {
@@ -75,39 +75,39 @@ export default function App() {
 
   }, []);
 
-    useEffect(() => {
-      if (files.length > 0) {
-          const fac = new FastAverageColor();
+  useEffect(() => {
+    if (files.length > 0) {
+      const fac = new FastAverageColor();
 
-          files.forEach((file) => {
-              const bg = extractIssueNumber(file.name);
-              const img = new Image();
-              img.src = `/assets/${bg}.jpg`;
-              img.crossOrigin = "anonymous";
-              img.onload = () => {
-                  fac.getColorAsync(img)
-                      .then((color) => {
-                          setColors(prevColors => ({
-                              ...prevColors,
-                              [file.id]: color.hex
-                          }));
-                      })
-                      .catch((err) => console.error("Erro ao obter cor:", err));
-              };
-          });
-      }
-    }, [files]);
+      files.forEach((file) => {
+        const bg = extractIssueNumber(file.name);
+        const img = new Image();
+        img.src = `/assets/${bg}.jpg`;
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+          fac.getColorAsync(img)
+            .then((color) => {
+              setColors(prevColors => ({
+                ...prevColors,
+                [file.id]: color.hex
+              }));
+            })
+            .catch((err) => console.error("Erro ao obter cor:", err));
+        };
+      });
+    }
+  }, [files]);
 
   const openComicFromDrive = (fileId, fileName) => {
     if (!fileName.toLowerCase().endsWith(".cbz")) {
       console.error("O arquivo não é um CBZ.");
       return;
     }
-  
+
     const fileUrl = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${apiKey}`;
     setCurrentFile({ fileName, images: [], progress: "loading..." });
     setOverlay(true);
-    
+
     fetch(fileUrl)
       .then((response) => response.blob())
       .then((arrayBuffer) => processComic(arrayBuffer, fileName));
@@ -127,7 +127,7 @@ export default function App() {
     }
     setCurrentFile({ fileName, images: imageFiles, progress: "Loaded!", totalPages: imageFiles.length });
   };
-  
+
   const updateReadingProgress = (fileName, currentPage, totalPages) => {
     const updatedProgress = {
       ...readProgress,
@@ -136,12 +136,12 @@ export default function App() {
         total: totalPages,
       },
     };
-  
+
     setReadProgress(updatedProgress);
     localStorage.setItem("readingProgress", JSON.stringify(updatedProgress));
   };
-  
-  
+
+
   function extractInfoFromTitle(title) {
     const regex = /^(.*?)\s(\d{3})\s\((\d{4})\)/;
     const match = title.match(regex);
@@ -158,34 +158,34 @@ export default function App() {
 
   const arquivosFiltrados = files.filter((buscaItem) => {
     const { edicao } = extractInfoFromTitle(buscaItem.name);
-    return ( buscaItem.name.toLowerCase().includes(busca.toLowerCase()) || edicao.includes(busca))
+    return (buscaItem.name.toLowerCase().includes(busca.toLowerCase()) || edicao.includes(busca))
   })
-  .sort((a, b) => {
-    const edicaoA = parseInt(extractInfoFromTitle(a.name).edicao, 10) || 0;
-    const edicaoB = parseInt(extractInfoFromTitle(b.name).edicao, 10) || 0;
-    return edicaoA - edicaoB;
-  });
+    .sort((a, b) => {
+      const edicaoA = parseInt(extractInfoFromTitle(a.name).edicao, 10) || 0;
+      const edicaoB = parseInt(extractInfoFromTitle(b.name).edicao, 10) || 0;
+      return edicaoA - edicaoB;
+    });
 
   const toggleSaved = (id, fileName) => {
     setSaved((prevSaved) => {
       let updatedSaved = { ...prevSaved };
-  
+
       if (updatedSaved[id]) {
         delete updatedSaved[id];
       } else {
         updatedSaved[id] = { id, fileName };
       }
-  
+
       localStorage.setItem("favorites", JSON.stringify(updatedSaved));
       return updatedSaved;
     });
   };
 
   const eraseSearch = (e) => { setBusca(''); e.target.nextElementSibling.value = '' }
-  const getComicName = (string) => string.replace(/\(.*\)/, '').replace(/\b00(\d)\b/, '#0$1') .replace(/\b0(\d{2})\b/, '#$1').replace(/\b(\d{3})\b/, '#$1').replace('.cbz','')
+  const getComicName = (string) => string.replace(/\(.*\)/, '').replace(/\b00(\d)\b/, '#0$1').replace(/\b0(\d{2})\b/, '#$1').replace(/\b(\d{3})\b/, '#$1').replace('.cbz', '')
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen bg-gray-900 text-white [&:has(:popover-open)_ol]:pointer-events-none">
 
       <div className="flex justify-between items-center py-4 px-12 flex-wrap mb-12 gap-5 fixed top-0 left-0 w-full z-50 backdrop-blur-md bg-gray-950/45">
         <img src="/assets/logo.webp" width={120} />
@@ -193,97 +193,100 @@ export default function App() {
           {busca.length > 0 && <button className="bg-white/20 text-white text-sm rounded-full w-5 h-5 absolute top-2 right-4 border-0 z-10 leading-[0]" onClick={eraseSearch}>x</button>}
           <input type="text" placeholder="Seek by issue..." onInput={(e) => setBusca(e.target.value)} className="w-full px-5 p-2 text-gray-300  bg-white/10 rounded-xl  outline-none" />
         </div>
-        
+
         <div className="flex gap-3">
           <button onClick={() => setList(prv => !prv)}>{list ? <ColumnIcon /> : <ListIcon />}</button>
-          <button className="h-12 w-auto left-2" onClick={() => setOpenFav(prv => !prv)}><SaveIcon/></button>
+          <button className="h-12 w-auto left-2" popoverTarget="favs" ><SaveIcon /></button>
 
-          {openFav && <div className="bg-gray-800 absolute top-16 right-12 w-auto max-h-64 overflow-y-auto rounded-xl shadow-2xl p-7 text-sm flex flex-col gap-2 [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-gray-700 [&::-webkit-scrollbar-thumb]:bg-[#f4ed24]">
+          <div {... { popover: '' }} id={`favs`}
+            className="bg-gray-800 fixed inset-0 top-16 right-12 left-[unset] bottom-[unset] w-fit max-h-64 overflow-y-auto rounded-xl shadow-2xl p-7 text-sm [&:popover-open]:flex flex-col gap-2 
+                      [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-gray-700 [&::-webkit-scrollbar-thumb]:bg-[#f4ed24]">
+            {Object.values(saved).map((file, index) => (
 
-              {Object.values(saved).map((file,index) => (
-                
-                 <div className="flex flex-col gap-1">
-                    {readProgress[file.fileName] && (
-                      <progress value={readProgress[file.fileName].page / readProgress[file.fileName].total} max="1"
-                                className={`w-36 ${readProgress[file.fileName].page === readProgress[file.fileName].total ? '[&::-webkit-progress-value]:bg-[#00bcf0] [&::-moz-progress-bar]:bg-[#00bcf0]' : '[&::-webkit-progress-value]:bg-white [&::-moz-progress-bar]:bg-white' } after:border-white relative h-[1px] [WebkitAppearance:none] [appearance:none]`}
-                      ></progress>
-                    )}
+              <div className="flex flex-col gap-1" key={index}>
+                {readProgress[file.fileName] && (
+                  <progress value={readProgress[file.fileName].page / readProgress[file.fileName].total} max="1"
+                    className={`w-36 ${readProgress[file.fileName].page === readProgress[file.fileName].total ? '[&::-webkit-progress-value]:bg-[#00bcf0] [&::-moz-progress-bar]:bg-[#00bcf0]' : '[&::-webkit-progress-value]:bg-white [&::-moz-progress-bar]:bg-white'} after:border-white relative h-[1px] [WebkitAppearance:none] [appearance:none]`}
+                  ></progress>
+                )}
 
-                   <div className="flex gap-2 items-center" key={index}>
-                    <button className={`bg-[#f4ed24] hover:bg-[#00bcf0] text-[#303539] rounded transition z-20 py-0.5 px-2 w-auto`}
-                            onClick={() => openComicFromDrive(file.id, file.fileName)} >
-                      Read
-                    </button>
-                    <span className="truncate">{getComicName(file.fileName)}</span>
-                  </div>
-                 </div>
-              ))}
-          </div>}
+                <div className="flex gap-2 items-center">
+                  <button className={`bg-[#f4ed24] hover:bg-[#00bcf0] text-[#303539] rounded transition z-20 py-0.5 px-2 w-auto`}
+                    onClick={() => openComicFromDrive(file.id, file.fileName)} >
+                    Read
+                  </button>
+                  <span className="truncate text-white">{getComicName(file.fileName)}</span>
+                </div>
+
+              </div>
+            ))}
+          </div>
+
         </div>
       </div>
 
       {loading && <div className="text-center">reading folder...</div>}
       {error && <div className="text-center text-red-500">Error: {error.message}</div>}
 
-        <>
-          {!loading && !error && (
-            <>
-              {arquivosFiltrados.length > 0 ? (
+      <>
+        {!loading && !error && (
+          <>
+            {arquivosFiltrados.length > 0 ? (
 
-                <ol className={`flex py-36 ${list ? 'flex-col gap-3 px-8 ' : 'px-8 lg:px-4 gap-x-1 gap-y-7'}
+              <ol className={`flex py-36 ${list ? 'flex-col gap-3 px-8 ' : 'px-8 lg:px-4 gap-x-1 gap-y-7'}
                                 flex-wrap items-center ${busca.length > 1 ? 'justify-start' : 'justify-around'} ${comic ? 'pointer-events-none brightness-[.2]' : ''}`}>
 
-                  <li className="absolute pointer-events-none"></li>
 
-                  {arquivosFiltrados.map((file, index) => {
-                    const info = extractInfoFromTitle(file.name);
-                    const fileProgress = readProgress[file.name];
+                {arquivosFiltrados.map((file, index) => {
+                  const info = extractInfoFromTitle(file.name);
+                  const fileProgress = readProgress[file.name];
 
-                    return (
-                      <li key={file.id} style={{"--bg": `url(/../assets/${info.edicao < 100 ? parseInt(info.edicao, 10) : info.edicao}.jpg)`, backgroundSize: '100%', color:colors[file.id] || "#fff", "--cor":colors[file.id] }}
-                          onMouseEnter={() => { setInfos({ fileName: file.name, id: file.id, description: file.description }); setColor(colors[file.id]) }}
-                          className={`hover:outline-[--cor] shadow-[0_0_12rem_transparent] hover:shadow-[--cor] outline outline-1 outline-transparent hover:[scale:1.01] !bg-center rounded-md relative hover:!grayscale-0 duration-300 transition-all grow lg:grow-0 cursor-pointer after:duration-200 after:content-[""] after:absolute 
-                                    ${list ? 'h-auto w-full' : 'bg-gray-700 h-96 aspect-[.65/1] overflow-hidden [background:var(--bg)]'}
-                                    ${list ? 'hover:after:opacity-100 after:opacity-0 after:!bg-center after:!bg-contain after:[background:--bg] after:h-0 after:-top-20 after:w-56 hover:after:h-80 after:right-0 after:rounded-xl after:z-40' :
-                                    'after:opacity-75 after:bottom-0 after:w-full after:bg-[linear-gradient(to_top,black_0%,transparent_100%)] after:h-full'}`}>
+                  return (
+                    <li key={file.id} style={{ "--bg": `url(/../assets/${info.edicao < 100 ? parseInt(info.edicao, 10) : info.edicao}.jpg)`, backgroundSize: '100%', color: colors[file.id] || "#fff", "--cor": colors[file.id] }}
+                      className={`hover:outline-[--cor] shadow-[0_0_12rem_transparent] hover:shadow-[--cor] outline outline-1 outline-transparent hover:[scale:1.01] !bg-center rounded-md relative hover:!grayscale-0 duration-300 transition-all grow lg:grow-0 cursor-pointer 
+                                  after:duration-200 after:content-[""] after:absolute ${list ? 'h-auto w-full' : 'bg-gray-700 h-96 aspect-[.65/1] overflow-hidden [background:var(--bg)]'}
+                                  ${list ? 'hover:after:hidden' : 'after:opacity-75 after:bottom-0 after:w-full after:bg-[linear-gradient(to_top,black_0%,transparent_100%)] after:h-full after:left-0'}`}
+                      onMouseEnter={() => setInfos({ fileName: file.name, id: file.id, description: file.description, color: colors[file.id] || "#fff" })}>
 
-                        <div className={`relative flex z-20  ${list ? 'flex-row z-20 py-0 px-3 items-center' : 'p-4 flex-col justify-end h-full'}`}>
+                      <div className={`relative flex z-20  ${list ? 'flex-row z-20 py-0 px-3 items-center' : 'p-4 flex-col justify-end h-full'}`}>
+                        <button className="absolute top-0 left-0 w-full h-[85%] z-50 border-none outline-none" popoverTarget={file.id}></button>
+                        <span className={`${list ? 'text-sm order-1' : 'text-xs'} text-white`}>
+                          {list ? file.name : `#${info.edicao} - (${info.ano})`}
+                        </span>
 
-                          <div className="absolute top-0 left-0 w-full h-[85%] z-50" onClick={() => setComic(true)}></div>
-                          <span className={`${list ? 'text-sm order-1' : 'text-xs'} text-white`}>
-                            {list ? file.name : `#${info.edicao} - (${info.ano})`}
-                          </span>
-                          
-                          <div className="flex items-center justify-between mb-2">
-                            <button onClick={() => openComicFromDrive(file.id, file.name)} className={`bg-[#f4ed24] hover:bg-[#00bcf0] text-[#303539] rounded transition z-20 ${list ? 'mr-4 py-1 px-2 order-0' : 'py-2 px-4 w-auto'}`}>
-                              {fileProgress && fileProgress.page > 1 ? 'Continue' : 'Read'}
-                            </button>
+                        <div className="flex items-center justify-between mb-2">
 
-                            <button className={`h-12 w-auto ${list ? 'mr-8' : ''} ${saved[file.id] ? '[&_path]:fill-[#f4ed24]' : '[&_path]:fill-none [&_path]:stroke-[#f4ed24]'}`} 
-                                    onClick={() => toggleSaved(file.id, file.name)}>
-                              <SaveIcon />
-                            </button>
-                          </div>
+                          <button popoverTarget={`issue-${extractIssueNumber(file.name)}`}
+                            onClick={() => openComicFromDrive(file.id, file.name)}
+                            className={`bg-[#f4ed24] hover:bg-[#00bcf0] text-[#303539] rounded transition outline-none z-20 ${list ? 'mr-4 py-1 px-2 order-0' : 'py-2 px-4 w-auto'}`}>
+                            {fileProgress && fileProgress.page > 1 ? 'Continue' : 'Read'}
+                          </button>
 
-                          {!list && fileProgress && (
-                            <progress value={fileProgress.page / fileProgress.total} max="1"
-                                      className={`w-full ${fileProgress.page === fileProgress.total ? '[&::-webkit-progress-value]:bg-[#00bcf0] [&::-moz-progress-bar]:bg-[#00bcf0]' : '[&::-webkit-progress-value]:bg-white [&::-moz-progress-bar]:bg-white' } after:border-white relative h-[1px] [WebkitAppearance:none] [appearance:none]`}
-                            ></progress>
-                          )}
+                          <button className={`h-12 outline-none w-auto ${list ? 'mr-8' : ''} ${saved[file.id] ? '[&_path]:fill-[#f4ed24]' : '[&_path]:fill-none [&_path]:stroke-[#f4ed24]'}`}
+                            onClick={() => toggleSaved(file.id, file.name)}>
+                            <SaveIcon />
+                          </button>
                         </div>
-                      </li>
-                    );
-                  })}
 
-                </ol>
-              ) : (
-                <p className="text-center">Issue not found.</p>
-              )}
-            </>
-          )}
-        </>
-      {currentFile && <ComicReader file={currentFile} overlay={overlay} setOverlay={setOverlay} setComic={setComic} updateProgress={updateReadingProgress} readProgress={readProgress} extractIssueNumber={extractIssueNumber}/>}
-      {comic && <ComicBook file={infos} setComic={setComic} openComicFromDrive={openComicFromDrive} toggleSaved={toggleSaved} saved={saved} color={color} />}
+                        {!list && fileProgress && (
+                          <progress value={fileProgress.page / fileProgress.total} max="1"
+                            className={`w-full ${fileProgress.page === fileProgress.total ? '[&::-webkit-progress-value]:bg-[#00bcf0] [&::-moz-progress-bar]:bg-[#00bcf0]' : '[&::-webkit-progress-value]:bg-white [&::-moz-progress-bar]:bg-white'} after:border-white relative h-[1px] [WebkitAppearance:none] [appearance:none]`}
+                          ></progress>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+
+              </ol>
+            ) : (
+              <p className="text-center">Issue not found.</p>
+            )}
+          </>
+        )}
+      </>
+      {currentFile && <ComicReader file={currentFile} overlay={overlay} setOverlay={setOverlay} setComic={setComic} updateProgress={updateReadingProgress} readProgress={readProgress} extractIssueNumber={extractIssueNumber} />}
+      <ComicBook file={infos || { fileName: 'N/A', id: 'N/A', description: 'N/A', color: 'white' }} setComic={setComic} openComicFromDrive={openComicFromDrive} toggleSaved={toggleSaved} saved={saved} />
 
       <footer className="flex justify-center gap-4 text-xs text-gray-300 pt-32 pb-12">
         <a href="https://github.com/brunofranciscojs/Comic-Reader" target="_blank">see on github</a>
