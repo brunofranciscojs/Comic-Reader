@@ -9,7 +9,7 @@ html{
   @apply [&:has(article:popover-open)]:overflow-hidden
 }
 ol{
-  @apply [&:has(li:not(:hover))_li:hover]:brightness-100 [&:has(li:hover)_li]:brightness-50;
+  @apply [&:has(li:not(:hover))_li:hover]:brightness-150 [&:has(li:hover)_li]:brightness-100;
  
 }
 
